@@ -120,9 +120,7 @@ export function OverviewClient() {
   const { data, error, isLoading } = useSWR<ApiResponse>('/api/stats', fetcher, {
     refreshInterval: 5_000,
   })
-  const { data: sessionsData } = useSWR<{ sessions: SessionWithFacet[] }>('/api/sessions', fetcher, {
-    refreshInterval: 5_000,
-  })
+  const { data: sessionsData } = useSWR<{ sessions: SessionWithFacet[] }>('/api/sessions?limit=20', fetcher)
   const { data: projectsData } = useSWR<{ projects: ProjectSummary[] }>('/api/projects', fetcher, {
     refreshInterval: 5_000,
   })
@@ -185,50 +183,17 @@ export function OverviewClient() {
   const previousEndKey = dateKey(subDays(rangeStart, 1))
   const previousDailyActivity = stats.dailyActivity.filter(day => inRange(day.date, previousStartKey, previousEndKey))
 
-  const filteredSessions = sessions.filter(session => {
-    const key = dateKey(new Date(session.start_time))
-    return key >= rangeStartKey && key <= rangeEndKey
-  })
-  const hasSessionRangeData = !!sessionsData
-
-  const selectedSessionCount = hasSessionRangeData
-    ? filteredSessions.length
-    : sumDailyActivity(selectedDailyActivity, 'sessionCount')
-  const selectedMessageCount = hasSessionRangeData
-    ? filteredSessions.reduce((sum, session) => sum + (session.user_message_count ?? 0) + (session.assistant_message_count ?? 0), 0)
-    : sumDailyActivity(selectedDailyActivity, 'messageCount')
-  const selectedInputTokens = hasSessionRangeData
-    ? filteredSessions.reduce((sum, session) => sum + (session.input_tokens ?? 0), 0)
-    : 0
-  const selectedOutputTokens = hasSessionRangeData
-    ? filteredSessions.reduce((sum, session) => sum + (session.output_tokens ?? 0), 0)
-    : 0
-  const selectedCacheReadTokens = hasSessionRangeData
-    ? filteredSessions.reduce((sum, session) => sum + (session.cache_read_input_tokens ?? 0), 0)
-    : 0
-  const selectedCacheWriteTokens = hasSessionRangeData
-    ? filteredSessions.reduce((sum, session) => sum + (session.cache_creation_input_tokens ?? 0), 0)
-    : 0
-  const selectedTokenTotalFromSessions = selectedInputTokens + selectedOutputTokens + selectedCacheReadTokens + selectedCacheWriteTokens
-  const selectedTokenTotal = hasSessionRangeData ? selectedTokenTotalFromSessions : sumDailyTokens(selectedDailyTokens)
-  const selectedCost = hasSessionRangeData
-    ? filteredSessions.reduce((sum, session) => sum + (session.estimated_cost ?? 0), 0)
-    : 0
+  const selectedSessionCount = sumDailyActivity(selectedDailyActivity, 'sessionCount')
+  const selectedMessageCount = sumDailyActivity(selectedDailyActivity, 'messageCount')
+  const selectedTokenTotal = sumDailyTokens(selectedDailyTokens)
+  const selectedCost = 0
   const selectedActiveDays = selectedDailyActivity.filter(day => day.messageCount > 0 || day.sessionCount > 0).length
   const periodLabel = usingCustom ? 'custom range' : `last ${chartDays} days`
 
   const inputBlue = theme === 'light' ? '#4f46e5' : '#a5b4fc'
-  const outputInk = theme === 'light' ? '#111827' : '#e5e7eb'
-  const tokenSegs = hasSessionRangeData
-    ? [
-        { label: 'input',       value: selectedInputTokens,      color: inputBlue },
-        { label: 'output',      value: selectedOutputTokens,     color: outputInk },
-        { label: 'cache read',  value: selectedCacheReadTokens,  color: '#10b981' },
-        { label: 'cache write', value: selectedCacheWriteTokens, color: '#8b5cf6' },
-      ]
-    : [
-        { label: 'total', value: selectedTokenTotal, color: inputBlue },
-      ]
+  const tokenSegs = [
+    { label: 'total', value: selectedTokenTotal, color: inputBlue },
+  ]
 
   // Trends compare last N days vs previous N days (capped at 30 to avoid sparse data)
   const trendWindow = Math.min(Math.max(chartDays, 7), 30)
@@ -326,7 +291,7 @@ export function OverviewClient() {
         <StatCard
           title="Tokens Used"
           value={formatTokens(selectedTokenTotal)}
-          description={hasSessionRangeData ? `${formatTokens(selectedCacheReadTokens)} from cache` : `${periodLabel} aggregate`}
+          description={`${periodLabel} aggregate`}
           sparkData={getTokenSpark(selectedDailyTokens, Math.min(chartDays, 30))}
           accentColor={inputBlue}
         />

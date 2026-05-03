@@ -44,10 +44,14 @@ Useful environment variables:
 ```bash
 CODEX_CONFIG_DIR=~/.codex-work npx codex-lens-dashboard
 CODEX_LENS_CACHE_DIR=/tmp/codex-lens-runtime npx codex-lens-dashboard
+CODEX_LENS_MAX_FALLBACK_ROLLOUTS=500 npx codex-lens-dashboard
+CODEX_LENS_MAX_REPLAY_EVENTS=25000 npx codex-lens-dashboard
 ```
 
 - `CODEX_CONFIG_DIR`: folder to analyze. Defaults to `~/.codex`.
 - `CODEX_LENS_CACHE_DIR`: runtime app cache folder. Defaults to `~/.codex-lens`.
+- `CODEX_LENS_MAX_FALLBACK_ROLLOUTS`: maximum rollout JSONL files to parse when no SQLite/index summary exists. Defaults to `500`.
+- `CODEX_LENS_MAX_REPLAY_EVENTS`: maximum JSONL events loaded for one replay view. Defaults to `25000`.
 
 ## Dashboard Sections
 
@@ -279,6 +283,21 @@ Derived metrics include:
 - Estimated cost.
 
 Cost is the most important caveat: Codex stores token counters, not final billing invoices. Cost charts are estimates only when a local pricing table is configured.
+
+## Large Codex Homes
+
+Some Codex folders can be very large. A local `~/.codex` may include tens of gigabytes of sessions, multi-gigabyte SQLite logs, and thousands of indexed sessions.
+
+Codex Lens is designed to load summary pages without reading every rollout JSONL file into memory:
+
+- Overview, Projects, Activity, Tools, and Sessions prefer SQLite/index metadata.
+- `/api/sessions` is paginated server-side.
+- The overview page requests only the latest sessions needed for its recent-session table.
+- Rollout JSONL parsing is streaming and bounded.
+- Full replay parsing happens only when opening a specific session.
+- Storage size uses the platform `du` command when available, with a portable filesystem walk as fallback.
+
+If no SQLite/index summary exists, Codex Lens falls back to parsing a bounded number of recent rollout files instead of eagerly loading the entire sessions folder.
 
 ## Development
 

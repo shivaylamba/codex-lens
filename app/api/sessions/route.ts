@@ -5,8 +5,12 @@ import type { SessionWithFacet } from '@/types/claude'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-  const sessions = await getSessions()
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const limit = Math.min(Math.max(Number(searchParams.get('limit') ?? 250), 1), 1000)
+  const offset = Math.max(Number(searchParams.get('offset') ?? 0), 0)
+  const allSessions = await getSessions({ includeRolloutFallback: false })
+  const sessions = allSessions.slice(offset, offset + limit)
   const result: SessionWithFacet[] = sessions.map(s => ({
     ...s,
     estimated_cost: estimateCostFromUsage(s.model ?? 'unknown', {
@@ -21,5 +25,5 @@ export async function GET() {
     has_compaction: false,
     has_thinking: (s.reasoning_output_tokens ?? 0) > 0,
   }))
-  return NextResponse.json({ sessions: result, total: result.length })
+  return NextResponse.json({ sessions: result, total: allSessions.length, limit, offset })
 }

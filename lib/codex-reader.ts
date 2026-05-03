@@ -1,6 +1,8 @@
 import fs from 'fs/promises'
+import { createReadStream } from 'fs'
 import path from 'path'
 import os from 'os'
+import readline from 'readline'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
 import type {
@@ -32,6 +34,8 @@ const execFileAsync = promisify(execFile)
 const CODEX_DIR = process.env.CODEX_CONFIG_DIR ?? path.join(os.homedir(), '.codex')
 const MAX_PREVIEW_BYTES = 80_000
 const MAX_INVENTORY_ITEMS = 5_000
+const MAX_FALLBACK_ROLLOUTS = Number(process.env.CODEX_LENS_MAX_FALLBACK_ROLLOUTS ?? 500)
+const MAX_REPLAY_EVENTS = Number(process.env.CODEX_LENS_MAX_REPLAY_EVENTS ?? 25_000)
 
 type AnyRecord = Record<string, unknown>
 
@@ -66,6 +70,12 @@ interface ThreadRow {
 interface RolloutParse {
   meta: SessionMeta | null
   replay: ReplayData
+}
+
+interface SessionReadOptions {
+  limit?: number
+  offset?: number
+  includeRolloutFallback?: boolean
 }
 
 export function codexPath(...segments: string[]): string {
@@ -234,6 +244,22 @@ async function rolloutFiles(): Promise<string[]> {
   return listFilesRecursive(codexPath('sessions'), file => file.endsWith('.jsonl'))
 }
 
+async function rolloutFilesByMtime(limit = MAX_FALLBACK_ROLLOUTS, offset = 0): Promise<string[]> {
+  const files = await rolloutFiles()
+  const withStats = await Promise.all(files.map(async file => {
+    try {
+      const stat = await fs.stat(file)
+      return { file, mtimeMs: stat.mtimeMs }
+    } catch {
+      return { file, mtimeMs: 0 }
+    }
+  }))
+  return withStats
+    .sort((a, b) => b.mtimeMs - a.mtimeMs)
+    .slice(offset, offset + limit)
+    .map(item => item.file)
+}
+
 function sessionIdFromPath(filePath: string): string {
   const base = path.basename(filePath, '.jsonl')
   const match = base.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i)
@@ -241,17 +267,146 @@ function sessionIdFromPath(filePath: string): string {
 }
 
 async function readRolloutLines(filePath: string): Promise<AnyRecord[]> {
+  const lines: AnyRecord[] = []
   try {
-    const raw = await fs.readFile(filePath, 'utf-8')
-    const lines: AnyRecord[] = []
-    for (const line of raw.split(/\r?\n/)) {
+    const rl = readline.createInterface({
+      input: createReadStream(filePath, { encoding: 'utf-8' }),
+      crlfDelay: Infinity,
+    })
+    for await (const line of rl) {
       if (!line.trim()) continue
       const parsed = safeJsonParse<AnyRecord>(line)
       if (parsed) lines.push(parsed)
+      if (lines.length >= MAX_REPLAY_EVENTS) {
+        rl.close()
+        break
+      }
     }
     return lines
   } catch {
     return []
+  }
+}
+
+async function readSessionIndex(): Promise<SessionMeta[]> {
+  const indexPath = codexPath('session_index.jsonl')
+  if (!await fileExists(indexPath)) return []
+  const sessions: SessionMeta[] = []
+  try {
+    const rl = readline.createInterface({
+      input: createReadStream(indexPath, { encoding: 'utf-8' }),
+      crlfDelay: Infinity,
+    })
+    for await (const line of rl) {
+      if (!line.trim()) continue
+      const row = safeJsonParse<AnyRecord>(line)
+      if (!row) continue
+      const meta = sessionIndexRowToMeta(row)
+      if (meta) sessions.push(meta)
+    }
+  } catch {
+    return []
+  }
+  return sessions.sort((a, b) => b.start_time.localeCompare(a.start_time))
+}
+
+function firstString(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value
+  }
+  return ''
+}
+
+function firstNumber(...values: unknown[]): number {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value)
+  }
+  return 0
+}
+
+function isoFromUnknown(value: unknown): string {
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString()
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const ms = value > 1_000_000_000_000 ? value : value * 1000
+    return isoFromMs(ms)
+  }
+  return ''
+}
+
+function sessionIndexRowToMeta(row: AnyRecord): SessionMeta | null {
+  const sessionId = firstString(row.session_id, row.id, row.sessionId, row.thread_id, row.threadId)
+  if (!sessionId) return null
+  const startTime =
+    isoFromUnknown(row.start_time) ||
+    isoFromUnknown(row.created_at) ||
+    isoFromUnknown(row.created_at_ms) ||
+    isoFromUnknown(row.timestamp) ||
+    isoFromUnknown(row.updated_at) ||
+    isoFromUnknown(row.updated_at_ms)
+  if (!startTime) return null
+  const endTime =
+    isoFromUnknown(row.end_time) ||
+    isoFromUnknown(row.updated_at) ||
+    isoFromUnknown(row.updated_at_ms) ||
+    startTime
+  const start = new Date(startTime).getTime()
+  const end = new Date(endTime).getTime()
+  const rolloutPath = firstString(row.rollout_path, row.path, row.file_path, row.file)
+  const projectPath = firstString(row.cwd, row.project_path, row.projectPath, row.workspace, row.source) || 'Unknown'
+  const userMessages = firstNumber(row.user_message_count, row.user_messages, row.messages, row.message_count)
+  const assistantMessages = firstNumber(row.assistant_message_count, row.assistant_messages)
+  const inputTokens = firstNumber(row.input_tokens, row.tokens_used, row.total_input_tokens)
+  const outputTokens = firstNumber(row.output_tokens, row.total_output_tokens)
+  const cacheReadTokens = firstNumber(row.cache_read_input_tokens, row.cached_input_tokens)
+  const reasoningTokens = firstNumber(row.reasoning_output_tokens)
+  return {
+    session_id: sessionId,
+    project_path: projectPath,
+    start_time: startTime,
+    duration_minutes: Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, (end - start) / 60_000) : 0,
+    user_message_count: userMessages,
+    assistant_message_count: assistantMessages,
+    tool_counts: parseMaybeJsonObject(row.tool_counts) as Record<string, number>,
+    languages: {},
+    git_commits: 0,
+    git_pushes: 0,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    cache_creation_input_tokens: firstNumber(row.cache_creation_input_tokens),
+    cache_read_input_tokens: cacheReadTokens,
+    reasoning_output_tokens: reasoningTokens,
+    first_prompt: truncate(firstString(row.first_prompt, row.first_user_message, row.title)),
+    user_interruptions: 0,
+    user_response_times: [],
+    tool_errors: firstNumber(row.tool_errors),
+    tool_error_categories: {},
+    uses_task_agent: !!row.agent_nickname || !!row.agent_role,
+    uses_mcp: false,
+    uses_web_search: false,
+    uses_web_fetch: false,
+    lines_added: 0,
+    lines_removed: 0,
+    files_modified: 0,
+    message_hours: [new Date(startTime).getHours()],
+    user_message_timestamps: [startTime],
+    model: firstString(row.model),
+    model_provider: firstString(row.model_provider),
+    source: firstString(row.source),
+    cli_version: firstString(row.cli_version, row.version),
+    git_branch: firstString(row.git_branch),
+    sandbox_policy: firstString(row.sandbox_policy),
+    approval_mode: firstString(row.approval_mode),
+    archived: !!row.archived,
+    rollout_path: rolloutPath ? path.resolve(CODEX_DIR, rolloutPath) : undefined,
+    title: firstString(row.title),
+    reasoning_effort: firstString(row.reasoning_effort),
+    agent_nickname: firstString(row.agent_nickname),
+    agent_role: firstString(row.agent_role),
+    memory_mode: firstString(row.memory_mode),
   }
 }
 
@@ -583,27 +738,37 @@ async function parseRollout(filePath: string, thread?: ThreadRow): Promise<Rollo
   }
 }
 
-export async function getSessions(): Promise<SessionMeta[]> {
-  const [files, threads] = await Promise.all([rolloutFiles(), readThreads()])
-  const threadById = new Map(threads.map(t => [t.id, t]))
-  const threadByRollout = new Map(threads.filter(t => t.rollout_path).map(t => [path.resolve(CODEX_DIR, t.rollout_path!), t]))
+export async function getSessions(options: SessionReadOptions = {}): Promise<SessionMeta[]> {
+  const { limit, offset = 0, includeRolloutFallback = true } = options
+  const [threads, indexSessions] = await Promise.all([readThreads(), readSessionIndex()])
 
-  const parsed = await Promise.all(files.map(async file => {
+  const fromThreads = threads.map(threadToSessionMeta).filter(Boolean) as SessionMeta[]
+  const byId = new Map<string, SessionMeta>()
+  for (const session of [...indexSessions, ...fromThreads]) {
+    byId.set(session.session_id, { ...(byId.get(session.session_id) ?? {}), ...session })
+  }
+
+  if (byId.size) {
+    const sorted = [...byId.values()].sort((a, b) => b.start_time.localeCompare(a.start_time))
+    return typeof limit === 'number' ? sorted.slice(offset, offset + limit) : sorted
+  }
+
+  if (!includeRolloutFallback) return []
+
+  const files = await rolloutFilesByMtime(limit ?? MAX_FALLBACK_ROLLOUTS, offset)
+  const threadsForRollout = threads
+  const threadById = new Map(threads.map(t => [t.id, t]))
+  const threadByRollout = new Map(threadsForRollout.filter(t => t.rollout_path).map(t => [path.resolve(CODEX_DIR, t.rollout_path!), t]))
+  const fromRollouts: SessionMeta[] = []
+
+  for (const file of files) {
     const id = sessionIdFromPath(file)
     const thread = threadById.get(id) ?? threadByRollout.get(file)
-    return parseRollout(file, thread)
-  }))
+    const parsed = await parseRollout(file, thread)
+    if (parsed.meta) fromRollouts.push(parsed.meta)
+  }
 
-  const fromRollouts = parsed.map(p => p.meta).filter(Boolean) as SessionMeta[]
-  const rolloutIds = new Set(fromRollouts.map(s => s.session_id))
-
-  const threadOnly = threads
-    .filter(t => !rolloutIds.has(t.id))
-    .map(threadToSessionMeta)
-    .filter(Boolean) as SessionMeta[]
-
-  return [...fromRollouts, ...threadOnly]
-    .sort((a, b) => b.start_time.localeCompare(a.start_time))
+  return fromRollouts.sort((a, b) => b.start_time.localeCompare(a.start_time))
 }
 
 function threadToSessionMeta(t: ThreadRow): SessionMeta | null {
@@ -916,6 +1081,17 @@ export async function readHistory(limit = 200): Promise<HistoryEntry[]> {
 }
 
 export async function getCodexStorageBytes(): Promise<number> {
+  try {
+    const { stdout } = await execFileAsync('du', ['-sk', CODEX_DIR], {
+      timeout: 8_000,
+      maxBuffer: 1024 * 1024,
+    })
+    const kb = Number(stdout.trim().split(/\s+/)[0])
+    if (Number.isFinite(kb)) return kb * 1024
+  } catch {
+    // Fall through to the portable walker below.
+  }
+
   async function dirSize(dirPath: string): Promise<number> {
     let entries: Array<import('fs').Dirent> = []
     try {
