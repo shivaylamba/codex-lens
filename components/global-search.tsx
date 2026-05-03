@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, FileText, FolderOpen, Layers, Brain } from 'lucide-react'
+import { LayoutDashboard, FileText, FolderOpen, Boxes, Bot, Sparkles } from 'lucide-react'
 import {
   CommandDialog,
   CommandEmpty,
@@ -23,9 +23,13 @@ const PAGES = [
   { label: 'Tools',     href: '/tools'     },
   { label: 'Activity',  href: '/activity'  },
   { label: 'History',   href: '/history'   },
-  { label: 'Todos',     href: '/todos'     },
-  { label: 'Plans',     href: '/plans'     },
-  { label: 'Memory',    href: '/memory'    },
+  { label: 'Inventory', href: '/inventory' },
+  { label: 'Config',    href: '/config'    },
+  { label: 'Logs',      href: '/logs'      },
+  { label: 'Assets',    href: '/assets'    },
+  { label: 'Agents',    href: '/agents'    },
+  { label: 'Skills',    href: '/skills'    },
+  { label: 'Editable',  href: '/editable'  },
   { label: 'Settings',  href: '/settings'  },
   { label: 'Export',    href: '/export'    },
 ]
@@ -37,9 +41,9 @@ export function GlobalSearch() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [projects, setProjects] = useState<any[]>([])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [plans, setPlans] = useState<any[]>([])
+  const [inventory, setInventory] = useState<any[]>([])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [memories, setMemories] = useState<any[]>([])
+  const [agents, setAgents] = useState<any[]>([])
   const [loaded, setLoaded] = useState(false)
   const router = useRouter()
 
@@ -49,13 +53,13 @@ export function GlobalSearch() {
     Promise.all([
       fetch('/api/sessions').then(r => r.json()),
       fetch('/api/projects').then(r => r.json()),
-      fetch('/api/plans').then(r => r.json()),
-      fetch('/api/memory').then(r => r.json()),
-    ]).then(([s, p, pl, m]) => {
+      fetch('/api/inventory?limit=60').then(r => r.json()),
+      fetch('/api/agents').then(r => r.json()),
+    ]).then(([s, p, inv, ag]) => {
       setSessions(s.sessions ?? [])
       setProjects(p.projects ?? [])
-      setPlans(pl.plans ?? [])
-      setMemories(m.memories ?? [])
+      setInventory(inv.items ?? [])
+      setAgents(ag.spawn_edges ?? [])
       setLoaded(true)
     }).catch(() => setLoaded(true))
   }, [open, loaded])
@@ -93,7 +97,9 @@ export function GlobalSearch() {
         <CommandGroup heading="Pages">
           {PAGES.map(p => (
             <CommandItem key={p.href} value={p.label} onSelect={() => navigate(p.href)}>
-              <LayoutDashboard className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              {p.href === '/skills'
+                ? <Sparkles className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+                : <LayoutDashboard className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
               {p.label}
               <CommandShortcut>page</CommandShortcut>
             </CommandItem>
@@ -143,38 +149,38 @@ export function GlobalSearch() {
           </>
         )}
 
-        {plans.length > 0 && (
+        {inventory.length > 0 && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Plans">
-              {plans.map((p, i) => (
+            <CommandGroup heading="Inventory">
+              {inventory.slice(0, 50).map((p, i) => (
                 <CommandItem
-                  key={`plan-${i}`}
-                  value={`${p.name} ${(p.content ?? '').slice(0, 200)}`}
-                  onSelect={() => navigate('/plans')}
+                  key={`inventory-${i}`}
+                  value={`${p.relativePath ?? ''} ${p.kind ?? ''}`}
+                  onSelect={() => navigate('/inventory')}
                 >
-                  <Layers className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                  <span className="flex-1 truncate">{p.name}</span>
-                  <CommandShortcut>plan</CommandShortcut>
+                  <Boxes className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                  <span className="flex-1 truncate">{p.relativePath}</span>
+                  <CommandShortcut>{p.kind}</CommandShortcut>
                 </CommandItem>
               ))}
             </CommandGroup>
           </>
         )}
 
-        {memories.length > 0 && (
+        {agents.length > 0 && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Memory">
-              {memories.slice(0, 40).map((m, i) => (
+            <CommandGroup heading="Agents">
+              {agents.slice(0, 40).map((m, i) => (
                 <CommandItem
-                  key={`mem-${i}`}
-                  value={`${m.name ?? ''} ${m.description ?? ''} ${(m.body ?? '').slice(0, 100)}`}
-                  onSelect={() => navigate('/memory')}
+                  key={`agent-${i}`}
+                  value={`${m.parent_thread_id ?? ''} ${m.child_thread_id ?? ''} ${m.status ?? ''}`}
+                  onSelect={() => navigate('/agents')}
                 >
-                  <Brain className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span className="flex-1 truncate">{m.name}</span>
-                  <CommandShortcut>{m.type}</CommandShortcut>
+                  <Bot className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="flex-1 truncate">{m.child_thread_id}</span>
+                  <CommandShortcut>{m.status}</CommandShortcut>
                 </CommandItem>
               ))}
             </CommandGroup>

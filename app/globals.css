@@ -50,8 +50,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-mono);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -86,121 +86,122 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Claude Code accent colors */
-  --color-claude-terracotta: #d97706;
-  --color-claude-terracotta-light: #e5880a;
-  --color-terminal-orange: #d97706;
-  --color-terminal-green: #34d399;
+  /* Codex Lens accents */
+  --color-codex-indigo: #6366f1;
+  --color-codex-indigo-soft: #a5b4fc;
+  --color-codex-ink: #111827;
+  --color-terminal-blue: var(--viz-sky, #6366f1);
+  --color-terminal-green: #10b981;
   --color-terminal-amber: #f59e0b;
-  --color-terminal-blue: var(--viz-sky, #1d4ed8);
-  --color-terminal-purple: #a78bfa;
-  --color-terminal-red: #f87171;
-  --color-terminal-dim: #9ca3af;
-  --color-terminal-surface: #0f1117;
+  --color-terminal-purple: #8b5cf6;
+  --color-terminal-red: #ef4444;
+  --color-terminal-dim: #6b7280;
+  --color-terminal-surface: #0b0f19;
 }
 
-/* ─── Light theme (default) — higher contrast, clearer surfaces ─────────── */
+/* ─── Light theme (default) — Codex-style soft glass and clear contrast ─── */
 :root {
-  --radius: 0.375rem;
-  /* Zinc-based neutrals: page vs cards vs chrome read as distinct layers */
-  --background: #f4f4f5;
-  --foreground: #18181b;
-  --card: #ffffff;
-  --card-foreground: #18181b;
-  --popover: #ffffff;
-  --popover-foreground: #18181b;
-  --primary: #f97316;
-  --primary-foreground: #ffffff;
-  --secondary: #e4e4e7;
-  --secondary-foreground: #27272a;
-  --muted: #ececee;
-  --muted-foreground: #52525b;
-  --accent: #e4e4e7;
-  --accent-foreground: #18181b;
+  --radius: 0.5rem;
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-code: "JetBrains Mono", "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+  --background: #f9fafb;
+  --foreground: #111827;
+  --card: rgb(255 255 255 / 0.78);
+  --card-foreground: #111827;
+  --popover: rgb(255 255 255 / 0.9);
+  --popover-foreground: #111827;
+  --primary: #111827;
+  --primary-foreground: #f9fafb;
+  --secondary: rgb(229 231 235 / 0.72);
+  --secondary-foreground: #1f2937;
+  --muted: rgb(229 231 235 / 0.58);
+  --muted-foreground: #6b7280;
+  --accent: rgb(224 231 255 / 0.78);
+  --accent-foreground: #312e81;
   --destructive: #dc2626;
-  --border: #d4d4d8;
-  /* Input border token: visible edge on white fields */
-  --input: #d4d4d8;
-  --ring: #f97316;
-  --viz-sky: #1d4ed8;
-  /* Tool / category colors (light) — saturated, distinct; SVG uses solid fill (no color-mix) */
-  --viz-tool-read: #1d4ed8;
-  --viz-tool-write: #4338ca;
-  --viz-tool-edit: #ea580c;
-  --viz-tool-grep: #db2777;
-  --viz-tool-glob: #0891b2;
+  --border: rgb(129 140 248 / 0.22);
+  --input: rgb(156 163 175 / 0.34);
+  --ring: #6366f1;
+  --viz-sky: #6366f1;
+  --viz-tool-read: #4f46e5;
+  --viz-tool-write: #6366f1;
+  --viz-tool-edit: #8b5cf6;
+  --viz-tool-grep: #ec4899;
+  --viz-tool-glob: #06b6d4;
   --viz-tool-file-io: #2563eb;
-  --viz-tool-shell: #f97316;
+  --viz-tool-shell: #111827;
   --viz-tool-agent: #7c3aed;
-  --viz-tool-web: #15803d;
-  --viz-tool-planning: #ca8a04;
+  --viz-tool-web: #0f766e;
+  --viz-tool-image: #db2777;
+  --viz-tool-planning: #9333ea;
   --viz-tool-todo: #e11d48;
-  --viz-tool-skill: #0e7490;
+  --viz-tool-skill: #0891b2;
   --viz-tool-mcp: #059669;
   --viz-tool-other: #64748b;
-  --chart-1: #f97316;
-  --chart-2: #059669;
-  --chart-3: var(--viz-sky);
-  --chart-4: #7c3aed;
-  --chart-5: #d97706;
-  --sidebar: #fafafa;
-  --sidebar-foreground: #3f3f46;
-  --sidebar-primary: #f97316;
+  --chart-1: #6366f1;
+  --chart-2: #10b981;
+  --chart-3: #06b6d4;
+  --chart-4: #8b5cf6;
+  --chart-5: #f59e0b;
+  --sidebar: rgb(255 255 255 / 0.72);
+  --sidebar-foreground: #374151;
+  --sidebar-primary: #4f46e5;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e4e4e7;
-  --sidebar-accent-foreground: #18181b;
-  --sidebar-border: #d4d4d8;
-  --sidebar-ring: #f97316;
+  --sidebar-accent: rgb(224 231 255 / 0.76);
+  --sidebar-accent-foreground: #111827;
+  --sidebar-border: rgb(129 140 248 / 0.2);
+  --sidebar-ring: #6366f1;
 }
 
 /* ─── Dark theme ─────────────────────────────────────────────────────────── */
 .dark {
-  --background: #0f1117;
-  --foreground: #e8eaed;
-  --card: #171921;
-  --card-foreground: #e8eaed;
-  --popover: #171921;
-  --popover-foreground: #e8eaed;
-  --primary: #d97706;
-  --primary-foreground: #0f1117;
-  --secondary: #1e212b;
-  --secondary-foreground: #d1d5db;
-  --muted: #1e212b;
-  --muted-foreground: #94a3b8;
-  --accent: #1e212b;
-  --accent-foreground: #e8eaed;
+  --background: #0b0f19;
+  --foreground: #f3f4f6;
+  --card: rgb(17 24 39 / 0.78);
+  --card-foreground: #f3f4f6;
+  --popover: rgb(17 24 39 / 0.95);
+  --popover-foreground: #f3f4f6;
+  --primary: #eef2ff;
+  --primary-foreground: #111827;
+  --secondary: rgb(31 41 55 / 0.82);
+  --secondary-foreground: #e5e7eb;
+  --muted: rgb(31 41 55 / 0.72);
+  --muted-foreground: #a5adba;
+  --accent: rgb(55 65 81 / 0.72);
+  --accent-foreground: #eef2ff;
   --destructive: #f87171;
-  --border: #262a36;
-  --input: #1e212b;
-  --ring: #d97706;
-  --viz-sky: #60a5fa;
-  --viz-tool-read: #60a5fa;
-  --viz-tool-write: #a78bfa;
-  --viz-tool-edit: #fdba74;
+  --border: rgb(165 180 252 / 0.18);
+  --input: rgb(165 180 252 / 0.18);
+  --ring: #a5b4fc;
+  --viz-sky: #a5b4fc;
+  --viz-tool-read: #93c5fd;
+  --viz-tool-write: #a5b4fc;
+  --viz-tool-edit: #c4b5fd;
   --viz-tool-grep: #f472b6;
   --viz-tool-glob: #22d3ee;
   --viz-tool-file-io: #818cf8;
-  --viz-tool-shell: #fbbf24;
+  --viz-tool-shell: #e5e7eb;
   --viz-tool-agent: #c4b5fd;
   --viz-tool-web: #6ee7b7;
+  --viz-tool-image: #f472b6;
   --viz-tool-planning: #fcd34d;
   --viz-tool-todo: #fb7185;
   --viz-tool-skill: #5eead4;
   --viz-tool-mcp: #86efac;
   --viz-tool-other: #94a3b8;
-  --chart-1: #d97706;
+  --chart-1: #a5b4fc;
   --chart-2: #34d399;
   --chart-3: var(--viz-sky);
-  --chart-4: #a78bfa;
+  --chart-4: #c4b5fd;
   --chart-5: #fbbf24;
-  --sidebar: #0b0d12;
+  --sidebar: rgb(11 15 25 / 0.76);
   --sidebar-foreground: #d1d5db;
-  --sidebar-primary: #d97706;
-  --sidebar-primary-foreground: #0f1117;
-  --sidebar-accent: #1a1d26;
-  --sidebar-accent-foreground: #e8eaed;
-  --sidebar-border: #1a1d26;
-  --sidebar-ring: #d97706;
+  --sidebar-primary: #a5b4fc;
+  --sidebar-primary-foreground: #0b0f19;
+  --sidebar-accent: rgb(31 41 55 / 0.78);
+  --sidebar-accent-foreground: #f3f4f6;
+  --sidebar-border: rgb(165 180 252 / 0.16);
+  --sidebar-ring: #a5b4fc;
 }
 
 @layer base {
@@ -208,18 +209,45 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-geist-mono), "JetBrains Mono", "Fira Code", "Consolas", monospace;
-    font-size: 15px;
+    @apply text-foreground;
+    min-height: 100vh;
+    background-color: var(--background);
+    background-image:
+      linear-gradient(135deg, #dbeafe 0%, #eef2ff 34%, #f9fafb 72%, #e0e7ff 100%);
+    font-family: var(--font-ui);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    font-kerning: normal;
+    text-rendering: geometricPrecision;
+  }
+
+  .dark body {
+    background-color: var(--background);
+    background-image:
+      linear-gradient(135deg, #0b0f19 0%, #111827 48%, #1e1b4b 100%);
   }
 }
 
-/* ─── Light mode: subtle depth on cards (matches orange-700 primary) ───── */
-:root:not(.dark) [data-slot="card"] {
+/* ─── Shared glass surfaces ─────────────────────────────────────────────── */
+[data-slot="card"],
+[data-slot="popover-content"],
+[data-slot="dialog-content"],
+[cmdk-root] {
+  backdrop-filter: blur(18px);
+}
+
+[data-slot="card"] {
   box-shadow:
-    0 1px 2px 0 rgba(24, 24, 27, 0.04),
-    0 4px 16px -2px rgba(249, 115, 22, 0.08),
-    0 0 0 1px rgba(24, 24, 27, 0.05);
+    0 1px 2px rgb(17 24 39 / 0.04),
+    0 20px 60px rgb(99 102 241 / 0.11),
+    inset 0 1px 0 rgb(255 255 255 / 0.46);
+}
+
+.dark [data-slot="card"] {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.16),
+    0 20px 60px rgb(0 0 0 / 0.24),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────────────────────── */
@@ -238,19 +266,20 @@
   background: var(--muted-foreground);
 }
 
-/* ─── Terminal glow utilities ────────────────────────────────────────────── */
-.glow-orange {
-  text-shadow: 0 0 10px rgba(217, 119, 6, 0.5);
+/* ─── Accent glow utilities ──────────────────────────────────────────────── */
+.glow-indigo {
+  text-shadow: 0 0 18px rgb(99 102 241 / 0.28);
 }
 .glow-green {
-  text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+  text-shadow: 0 0 18px rgb(16 185 129 / 0.26);
 }
 
 /* ─── Recharts overrides ─────────────────────────────────────────────────── */
 .recharts-tooltip-wrapper .recharts-default-tooltip {
   background: var(--card) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 16px 40px rgb(17 24 39 / 0.12) !important;
 }
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
@@ -258,6 +287,6 @@
 }
 .recharts-text {
   fill: var(--muted-foreground) !important;
-  font-family: var(--font-geist-mono), monospace !important;
-  font-size: 13px !important;
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
 }

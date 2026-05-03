@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
-import { readSettings, getClaudeStorageBytes, readSkills, readInstalledPlugins } from '@/lib/claude-reader'
+import { getCodexStorageBytes, readConfigSummary, readInstalledPlugins, readSettings, readSkills } from '@/lib/codex-reader'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const [settings, storageBytes, skills, plugins] = await Promise.all([
+  const [settings, storageBytes, skills, plugins, config] = await Promise.all([
     readSettings(),
-    getClaudeStorageBytes(),
+    getCodexStorageBytes(),
     readSkills(),
     readInstalledPlugins(),
+    readConfigSummary(),
   ])
-  return NextResponse.json({ settings, storageBytes, skills, plugins })
+  return NextResponse.json({ settings, storageBytes, skills, plugins, config })
 }

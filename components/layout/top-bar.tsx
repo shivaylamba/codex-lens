@@ -15,7 +15,7 @@ interface TopBarProps {
   className?: string
 }
 
-const GITHUB_REPO = 'https://github.com/Arindam200/cc-lens'
+const GITHUB_REPO = 'https://github.com/shivaylamba'
 
 function formatTimestamp(d: Date) {
   return d.toLocaleString('en-US', {
@@ -54,20 +54,20 @@ export function TopBar({ title, subtitle, showStarButton = false, className }: T
   return (
     <header
       className={cn(
-        'sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-background/95 py-3 backdrop-blur px-4 md:px-6',
+        'sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border/70 bg-card/62 py-3 backdrop-blur-xl px-4 md:px-6',
         className
       )}
     >
       {/* Left: title + subtitle */}
       <div className="min-w-0">
-        <h1 className="text-base font-semibold text-foreground truncate">{title}</h1>
+        <h1 className="truncate text-[1.05rem] font-semibold tracking-[-0.01em] text-foreground">{title}</h1>
         {subtitle && (
-          <p className="text-xs text-muted-foreground truncate" suppressHydrationWarning>
+          <p className="truncate text-xs leading-relaxed text-muted-foreground" suppressHydrationWarning>
             {subtitle}{now ? ` · ${now}` : ''}
           </p>
         )}
         {!subtitle && now && (
-          <p className="text-xs text-muted-foreground" suppressHydrationWarning>{now}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground" suppressHydrationWarning>{now}</p>
         )}
       </div>
 
@@ -92,7 +92,7 @@ export function TopBar({ title, subtitle, showStarButton = false, className }: T
         >
           <Search className="w-3.5 h-3.5" />
           Search
-          <kbd className="ml-1 text-[10px] text-muted-foreground/50 border border-border rounded px-1 font-sans">⌘K</kbd>
+          <kbd className="ml-1 rounded-full border border-border/80 px-1.5 text-[10px] text-muted-foreground/60">⌘K</kbd>
         </Button>
 
         {/* Search — mobile icon only */}
@@ -121,7 +121,7 @@ export function TopBar({ title, subtitle, showStarButton = false, className }: T
 
         {/* Star on GitHub */}
         {showStarButton && (
-          <Button asChild size="sm" className="gap-2 font-medium">
+          <Button asChild size="sm" className="gap-2 font-medium shadow-[0_10px_28px_rgba(17,24,39,0.12)]">
             <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">
               <Github className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Star on GitHub</span>

@@ -10,7 +10,7 @@ export function slugToPath(slug: string): string {
 }
 
 /**
- * Encode a filesystem path to the slug format used by Claude Code.
+ * Encode a filesystem path to a dashboard slug.
  */
 export function pathToSlug(path: string): string {
   return path.replace(/\//g, '-')

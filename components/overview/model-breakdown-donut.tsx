@@ -16,10 +16,10 @@ interface Props {
 }
 
 const MODEL_COLORS = [
-  '#d97706',
-  '#34d399',
-  '#2563eb',
-  '#a78bfa',
+  '#6366f1',
+  '#10b981',
+  '#06b6d4',
+  '#8b5cf6',
   '#fbbf24',
 ]
 

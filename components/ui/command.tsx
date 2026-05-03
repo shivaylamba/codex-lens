@@ -15,7 +15,7 @@ function Command({
   return (
     <CommandPrimitive
       className={cn(
-        "flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground",
+        "flex h-full w-full flex-col overflow-hidden rounded-lg bg-popover text-popover-foreground",
         className
       )}
       {...props}
@@ -53,7 +53,7 @@ function CommandInput({
       <SearchIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
       <CommandPrimitive.Input
         className={cn(
-          "flex h-11 w-full rounded-md bg-transparent py-3 text-sm font-mono outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}
@@ -79,7 +79,7 @@ function CommandEmpty({
 }: React.ComponentProps<typeof CommandPrimitive.Empty>) {
   return (
     <CommandPrimitive.Empty
-      className="py-8 text-center text-sm text-muted-foreground/50 font-mono"
+      className="py-8 text-center text-sm text-muted-foreground/60"
       {...props}
     />
   )
@@ -119,10 +119,10 @@ function CommandItem({
   return (
     <CommandPrimitive.Item
       className={cn(
-        "relative flex cursor-pointer gap-2 select-none items-center rounded-sm px-2 py-2 text-sm outline-none font-mono",
+        "relative flex cursor-pointer gap-2 select-none items-center rounded-md px-2 py-2 text-sm outline-none",
         "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
-        "data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
-        "hover:bg-muted/60",
+        "data-[selected=true]:bg-accent/70 data-[selected=true]:text-foreground",
+        "hover:bg-accent/50",
         className
       )}
       {...props}
@@ -137,7 +137,7 @@ function CommandShortcut({
   return (
     <span
       className={cn(
-        "ml-auto text-[10px] tracking-widest text-muted-foreground/40 font-mono uppercase",
+        "ml-auto text-[10px] tracking-widest text-muted-foreground/50 uppercase",
         className
       )}
       {...props}

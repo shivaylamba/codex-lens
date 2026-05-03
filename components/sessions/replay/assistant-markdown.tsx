@@ -10,7 +10,7 @@ interface Props {
 }
 
 /**
- * Renders Claude assistant text as GitHub-flavored markdown with app-consistent styling.
+ * Renders assistant text as GitHub-flavored markdown with app-consistent styling.
  */
 export function AssistantMarkdown({ content, className }: Props) {
   return (
@@ -75,13 +75,13 @@ export function AssistantMarkdown({ content, className }: Props) {
               )
             }
             return (
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px] text-foreground before:content-none after:content-none">
+              <code className="rounded-md bg-accent/70 px-1.5 py-0.5 font-mono text-[12px] text-foreground before:content-none after:content-none">
                 {children}
               </code>
             )
           },
           pre: ({ children }) => (
-            <pre className="my-3 overflow-x-auto rounded-lg border border-border bg-muted/60 p-3 font-mono text-[13px] leading-relaxed [&>code]:bg-transparent [&>code]:p-0">
+            <pre className="my-3 overflow-x-auto rounded-lg border border-[#1f2937] bg-[#0b0f19] p-3 font-mono text-[13px] leading-relaxed text-[#e5e7eb] [&>code]:bg-transparent [&>code]:p-0 [&>code]:text-[#e5e7eb]">
               {children}
             </pre>
           ),

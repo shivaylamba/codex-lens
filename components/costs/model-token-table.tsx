@@ -2,10 +2,6 @@ import { formatTokens, formatCost } from '@/lib/decode'
 import type { ModelCostBreakdown } from '@/types/claude'
 
 function shortModel(m: string): string {
-  if (m.includes('opus-4-6'))   return 'claude-opus-4.6'
-  if (m.includes('opus-4-5'))   return 'claude-opus-4.5'
-  if (m.includes('sonnet-4-6')) return 'claude-sonnet-4.6'
-  if (m.includes('haiku-4-5'))  return 'claude-haiku-4.5'
   return m
 }
 
@@ -38,20 +34,20 @@ export function ModelTokenTable({ models }: Props) {
           {models.map(m => (
             <tr key={m.model} className="border-b border-border/30 hover:bg-muted/50 transition-colors">
               <td className="py-2 text-foreground/80">{shortModel(m.model)}</td>
-              <td className="py-2 text-right text-blue-700 dark:text-[#60a5fa]">{formatTokens(m.input_tokens)}</td>
-              <td className="py-2 text-right text-[#d97706]">{formatTokens(m.output_tokens)}</td>
-              <td className="py-2 text-right text-[#a78bfa]">{formatTokens(m.cache_write_tokens)}</td>
-              <td className="py-2 text-right text-[#34d399]">{formatTokens(m.cache_read_tokens)}</td>
-              <td className="py-2 text-right text-[#d97706] font-bold">{formatCost(m.estimated_cost)}</td>
+              <td className="py-2 text-right text-blue-700 dark:text-[#a5b4fc]">{formatTokens(m.input_tokens)}</td>
+              <td className="py-2 text-right text-[#6366f1]">{formatTokens(m.output_tokens)}</td>
+              <td className="py-2 text-right text-[#8b5cf6]">{formatTokens(m.cache_write_tokens)}</td>
+              <td className="py-2 text-right text-[#10b981]">{formatTokens(m.cache_read_tokens)}</td>
+              <td className="py-2 text-right text-[#6366f1] font-bold">{formatCost(m.estimated_cost)}</td>
             </tr>
           ))}
           <tr className="border-t border-border font-bold">
             <td className="py-2 text-muted-foreground">TOTAL</td>
-            <td className="py-2 text-right text-blue-700 dark:text-[#60a5fa]">{formatTokens(totals.input)}</td>
-            <td className="py-2 text-right text-[#d97706]">{formatTokens(totals.output)}</td>
-            <td className="py-2 text-right text-[#a78bfa]">{formatTokens(totals.cacheWrite)}</td>
-            <td className="py-2 text-right text-[#34d399]">{formatTokens(totals.cacheRead)}</td>
-            <td className="py-2 text-right text-[#d97706]">{formatCost(totals.cost)}</td>
+            <td className="py-2 text-right text-blue-700 dark:text-[#a5b4fc]">{formatTokens(totals.input)}</td>
+            <td className="py-2 text-right text-[#6366f1]">{formatTokens(totals.output)}</td>
+            <td className="py-2 text-right text-[#8b5cf6]">{formatTokens(totals.cacheWrite)}</td>
+            <td className="py-2 text-right text-[#10b981]">{formatTokens(totals.cacheRead)}</td>
+            <td className="py-2 text-right text-[#6366f1]">{formatCost(totals.cost)}</td>
           </tr>
         </tbody>
       </table>

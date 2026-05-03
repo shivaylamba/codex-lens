@@ -24,7 +24,7 @@ export function DayOfWeekChart({ data }: Props) {
             {data.map((d, i) => (
               <Cell
                 key={i}
-                fill={d.count === max ? '#d97706' : d.count > max * 0.6 ? '#d97706aa' : '#d9770640'}
+                fill={d.count === max ? '#6366f1' : d.count > max * 0.6 ? '#6366f1aa' : '#6366f140'}
               />
             ))}
           </Bar>

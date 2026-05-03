@@ -39,8 +39,9 @@ export default function HistoryPage() {
     const all = [...(data?.history ?? [])].reverse()
     if (!search) return all
     const q = search.toLowerCase()
-    return all.filter(e =>
+  return all.filter(e =>
       e.display?.toLowerCase().includes(q) ||
+      e.text?.toLowerCase().includes(q) ||
       e.project?.toLowerCase().includes(q)
     )
   }, [data, search])
@@ -55,7 +56,7 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <TopBar title="History" subtitle="~/.claude/history.jsonl" />
+      <TopBar title="History" subtitle="~/.codex/history.jsonl" />
       <div className="p-4 md:p-6 space-y-4">
 
         {error && (
@@ -92,7 +93,7 @@ export default function HistoryPage() {
             {pageEntries.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground text-sm">
                 {(data.history?.length ?? 0) === 0
-                  ? 'No history found in ~/.claude/history.jsonl'
+                  ? 'No history found in ~/.codex/history.jsonl'
                   : 'No entries match your search.'}
               </div>
             ) : (
@@ -104,12 +105,12 @@ export default function HistoryPage() {
                       className="border border-border rounded-lg bg-card px-4 py-3 hover:border-primary/30 transition-colors"
                     >
                       <p className="text-sm font-mono text-foreground leading-relaxed break-words">
-                        {entry.display || '—'}
+                        {entry.display || entry.text || '-'}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                        {entry.timestamp && (
+                        {(entry.timestamp || entry.ts) && (
                           <span className="text-xs text-muted-foreground/60">
-                            {formatTime(entry.timestamp)}
+                            {formatTime(entry.timestamp ?? entry.ts ?? 0)}
                           </span>
                         )}
                         {entry.project && (

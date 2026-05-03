@@ -1,4 +1,4 @@
-import { formatCost, formatPct, formatTokens } from '@/lib/decode'
+import { formatCost, formatTokens } from '@/lib/decode'
 import type { ModelCostBreakdown } from '@/types/claude'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
@@ -16,7 +16,7 @@ export function CacheEfficiencyPanel({ models, totalSavings }: Props) {
   const wouldHavePaid  = totalCost + totalSavings
 
   const pieData = [
-    { name: 'Cache Read', value: totalCacheRead, color: '#34d399' },
+    { name: 'Cache Read', value: totalCacheRead, color: '#10b981' },
     { name: 'Direct Input', value: totalInput, color: 'var(--viz-sky)' },
   ]
 
@@ -25,7 +25,7 @@ export function CacheEfficiencyPanel({ models, totalSavings }: Props) {
       <div className="space-y-2 text-[13px]">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Cache hit rate</span>
-          <span className="text-[#34d399] font-bold text-lg">{(hitRate * 100).toFixed(1)}%</span>
+          <span className="text-[#10b981] font-bold text-lg">{(hitRate * 100).toFixed(1)}%</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Context from cache</span>
@@ -45,8 +45,8 @@ export function CacheEfficiencyPanel({ models, totalSavings }: Props) {
             <span className="text-foreground font-mono">{formatCost(totalCost)}</span>
           </div>
           <div className="flex items-center justify-between font-bold">
-            <span className="text-[#34d399]">Savings</span>
-            <span className="text-[#34d399] font-mono">{formatCost(totalSavings)}</span>
+            <span className="text-[#10b981]">Savings</span>
+            <span className="text-[#10b981] font-mono">{formatCost(totalSavings)}</span>
           </div>
         </div>
       </div>

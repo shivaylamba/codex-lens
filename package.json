@@ -1,18 +1,18 @@
 {
-  "name": "cc-lens",
-  "version": "0.3.1",
-  "description": "Claude Code Lens — visualize your usage, costs, and sessions from ~/.claude/",
-  "author": "Arindam Majumder <arindam@studio1hq.com> (https://github.com/Arindam200)",
+  "name": "codex-lens",
+  "version": "0.1.0",
+  "description": "Codex Lens - local analytics and inventory for ~/.codex/",
+  "author": "Shivay Lamba",
   "license": "MIT",
-  "homepage": "https://github.com/Arindam200/cc-lens#readme",
+  "homepage": "https://github.com/shivaylamba/codex-lens#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Arindam200/cc-lens.git"
+    "url": "https://github.com/shivaylamba/codex-lens.git"
   },
   "keywords": [
-    "claude",
-    "claude-code",
-    "anthropic",
+    "codex",
+    "openai",
+    "codex-cli",
     "dashboard",
     "analytics",
     "cli"
@@ -21,7 +21,7 @@
     "node": ">=18"
   },
   "bin": {
-    "cc-lens": "bin/cli.js"
+    "codex-lens": "bin/cli.js"
   },
   "files": [
     "bin",

@@ -128,7 +128,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
               <CardDescription className="flex items-center gap-2">
                 <Coins className="h-4 w-4" /> Tokens
               </CardDescription>
-              <CardTitle className="text-3xl font-bold tabular-nums text-blue-700 dark:text-[#60a5fa]">{formatTokens(totalTokens)}</CardTitle>
+              <CardTitle className="text-3xl font-bold tabular-nums text-blue-700 dark:text-[#a5b4fc]">{formatTokens(totalTokens)}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">Input + output + cache</p>
@@ -140,7 +140,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
               <CardDescription className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4" /> Cost
               </CardDescription>
-              <CardTitle className="text-3xl font-bold tabular-nums text-[#d97706]">
+              <CardTitle className="text-3xl font-bold tabular-nums text-[#6366f1]">
                 {formatCost(replay.total_cost ?? 0)}
               </CardTitle>
             </CardHeader>

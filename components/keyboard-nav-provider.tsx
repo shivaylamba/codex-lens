@@ -7,7 +7,7 @@ function GModeIndicator() {
   const gMode = useGlobalKeyboardNav()
   if (!gMode) return null
   return (
-    <div className="fixed bottom-20 right-4 md:bottom-4 z-50 px-3 py-1.5 bg-background border border-primary/60 rounded text-sm font-mono text-primary shadow-lg animate-in fade-in-0 duration-100 pointer-events-none">
+    <div className="fixed bottom-20 right-4 md:bottom-4 z-50 rounded-full border border-border/80 bg-card/80 px-3 py-1.5 text-sm font-medium text-foreground shadow-lg backdrop-blur-xl animate-in fade-in-0 duration-100 pointer-events-none">
       g —
     </div>
   )

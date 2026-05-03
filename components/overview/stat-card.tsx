@@ -19,12 +19,12 @@ interface StatCardProps {
 
 /** Recharts sets SVG stroke/fill from strings; `var(--*)` often does not resolve on SVG → black. */
 function resolveChartColor(accentColor: string | undefined, theme: 'light' | 'dark'): string {
-  if (!accentColor) return theme === 'light' ? '#f97316' : '#d97706'
+  if (!accentColor) return theme === 'light' ? '#6366f1' : '#a5b4fc'
   switch (accentColor) {
     case 'var(--viz-sky)':
-      return theme === 'light' ? '#1d4ed8' : '#60a5fa'
+      return theme === 'light' ? '#4f46e5' : '#a5b4fc'
     case 'var(--foreground)':
-      return theme === 'light' ? '#18181b' : '#e8eaed'
+      return theme === 'light' ? '#111827' : '#f3f4f6'
     default:
       return accentColor
   }
@@ -52,12 +52,12 @@ export function StatCard({ title, value, description, trend, sparkData, accentCo
       : rawSpark.map(v => ({ v }))
 
   return (
-    <Card className="gap-3">
+    <Card className="gap-3 transition-transform duration-200 hover:-translate-y-0.5">
       <CardHeader className="pb-0">
         <CardDescription className="text-sm font-medium">{title}</CardDescription>
         <div className="flex items-end justify-between mt-1">
           <CardTitle
-            className="text-3xl font-bold tabular-nums leading-none"
+            className="text-[2rem] font-semibold tabular-nums leading-none tracking-[-0.02em]"
             style={{ color: resolvedAccent }}
           >
             {value}

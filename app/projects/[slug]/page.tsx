@@ -34,7 +34,7 @@ interface ProjectDetail {
   branches: Array<{ branch: string; turns: number }>
 }
 
-const LANG_CHART_COLORS = ['#d97706', 'var(--viz-sky)', '#34d399', '#a78bfa', '#fbbf24', '#f87171']
+const LANG_CHART_COLORS = ['#6366f1', 'var(--viz-sky)', '#10b981', '#8b5cf6', '#fbbf24', '#f87171']
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -151,7 +151,7 @@ export default function ProjectDetailPage() {
               <CardDescription className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" /> Tokens
               </CardDescription>
-              <CardTitle className="text-3xl font-bold tabular-nums text-blue-700 dark:text-[#60a5fa]">
+              <CardTitle className="text-3xl font-bold tabular-nums text-blue-700 dark:text-[#a5b4fc]">
                 {formatTokens(totalTokens)}
               </CardTitle>
             </CardHeader>
@@ -165,7 +165,7 @@ export default function ProjectDetailPage() {
               <CardDescription className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4" /> Est. Cost
               </CardDescription>
-              <CardTitle className="text-3xl font-bold tabular-nums text-[#d97706]">
+              <CardTitle className="text-3xl font-bold tabular-nums text-[#6366f1]">
                 {formatCost(totalCost)}
               </CardTitle>
             </CardHeader>
@@ -209,7 +209,7 @@ export default function ProjectDetailPage() {
                           </Link>
                         </TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">{msgs}</TableCell>
-                        <TableCell className="text-right tabular-nums text-[#d97706] font-mono font-medium">
+                        <TableCell className="text-right tabular-nums text-[#6366f1] font-mono font-medium">
                           {formatCost(s.estimated_cost)}
                         </TableCell>
                       </TableRow>
@@ -299,7 +299,7 @@ export default function ProjectDetailPage() {
                     contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
                     formatter={(v: unknown) => [formatCost(v as number), 'Cost']}
                   />
-                  <Line type="monotone" dataKey="cost" stroke="#d97706" strokeWidth={2} dot={{ r: 3, fill: '#d97706' }} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="cost" stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} activeDot={{ r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>

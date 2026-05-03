@@ -1,15 +1,15 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts'
 import { formatCost } from '@/lib/decode'
 import type { DailyCost } from '@/types/claude'
 
 const MODEL_COLORS: Record<string, string> = {
-  'claude-opus-4-6':        '#d97706',
-  'claude-opus-4-5-20251101': '#a78bfa',
-  'claude-sonnet-4-6':      'var(--viz-sky)',
-  'claude-haiku-4-5':       '#34d399',
+  'gpt-5.5':       '#6366f1',
+  'gpt-5.4':       'var(--viz-sky)',
+  'gpt-5.3-codex': '#10b981',
+  'crest-alpha':   '#8b5cf6',
 }
 
 function colorForModel(m: string): string {
@@ -20,10 +20,6 @@ function colorForModel(m: string): string {
 }
 
 function shortModel(m: string): string {
-  if (m.includes('opus-4-6'))   return 'Opus 4.6'
-  if (m.includes('opus-4-5'))   return 'Opus 4.5'
-  if (m.includes('sonnet-4-6')) return 'Sonnet 4.6'
-  if (m.includes('haiku-4-5'))  return 'Haiku 4.5'
   return m
 }
 
@@ -61,7 +57,7 @@ export function CostOverTimeChart({ daily }: Props) {
             <button
               key={w}
               onClick={() => setWindow(w)}
-              className={`px-2 py-0.5 rounded text-[12px] transition-colors ${window === w ? 'bg-primary text-black font-bold' : 'text-muted-foreground hover:text-foreground border border-border'}`}
+              className={`rounded-full px-2 py-0.5 text-[12px] transition-colors ${window === w ? 'bg-primary text-primary-foreground font-semibold' : 'text-muted-foreground hover:text-foreground border border-border/80 bg-card/60'}`}
             >
               {w === 365 ? 'All' : `${w}d`}
             </button>

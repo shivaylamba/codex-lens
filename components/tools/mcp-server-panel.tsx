@@ -16,7 +16,7 @@ export function McpServerPanel({ servers }: Props) {
         return (
           <div key={srv.server_name} className="border border-border/50 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[13px] font-bold text-[#34d399]">
+              <span className="text-[13px] font-bold text-[#10b981]">
                 🔌 {srv.server_name}
               </span>
               <span className="text-[12px] text-muted-foreground/60">
@@ -30,7 +30,7 @@ export function McpServerPanel({ servers }: Props) {
                   <div key={t.name} className="flex items-center gap-2 text-[12px]">
                     <span className="text-muted-foreground/70 w-32 truncate font-mono">{t.name}</span>
                     <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-[#34d399]/50" style={{ width: `${width}%` }} />
+                      <div className="h-full rounded-full bg-[#10b981]/50" style={{ width: `${width}%` }} />
                     </div>
                     <span className="text-muted-foreground/50 w-12 text-right">{t.calls}</span>
                   </div>

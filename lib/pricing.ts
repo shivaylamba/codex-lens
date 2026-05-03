@@ -8,30 +8,13 @@ interface ModelPricing {
 }
 
 export const PRICING: Record<string, ModelPricing> = {
-  'claude-opus-4-6': {
-    input:      15.00 / 1_000_000,
-    output:     75.00 / 1_000_000,
-    cacheWrite: 18.75 / 1_000_000,
-    cacheRead:   1.50 / 1_000_000,
-  },
-  'claude-opus-4-5-20251101': {
-    input:      15.00 / 1_000_000,
-    output:     75.00 / 1_000_000,
-    cacheWrite: 18.75 / 1_000_000,
-    cacheRead:   1.50 / 1_000_000,
-  },
-  'claude-sonnet-4-6': {
-    input:       3.00 / 1_000_000,
-    output:     15.00 / 1_000_000,
-    cacheWrite:  3.75 / 1_000_000,
-    cacheRead:   0.30 / 1_000_000,
-  },
-  'claude-haiku-4-5': {
-    input:       0.80 / 1_000_000,
-    output:       4.00 / 1_000_000,
-    cacheWrite:   1.00 / 1_000_000,
-    cacheRead:    0.08 / 1_000_000,
-  },
+  // Codex stores token counters, not billing totals. Keep unknown models at
+  // zero unless the local app owner fills in a pricing table.
+  'gpt-5.5':       { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 },
+  'gpt-5.4':       { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 },
+  'gpt-5.3-codex': { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 },
+  'crest-alpha':   { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 },
+  unknown:         { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 },
 }
 
 function getPricing(model: string): ModelPricing {
@@ -42,7 +25,7 @@ function getPricing(model: string): ModelPricing {
       return PRICING[key]
     }
   }
-  return PRICING['claude-opus-4-6']
+  return PRICING.unknown
 }
 
 export function estimateCostFromUsage(model: string, usage: TurnUsage): number {

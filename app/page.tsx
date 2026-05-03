@@ -5,9 +5,8 @@ export default function OverviewPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <TopBar
-        title="Claude Code Analytics"
-        subtitle="Real-time monitoring dashboard for Claude Code"
-        showStarButton
+        title="Codex Lens"
+        subtitle="Local analytics for ~/.codex sessions, tools, config, logs, and assets"
       />
       <OverviewClient />
     </div>

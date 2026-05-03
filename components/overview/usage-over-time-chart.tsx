@@ -113,12 +113,12 @@ export function UsageOverTimeChart({ data, days = 90, dateFrom, dateTo }: Props)
       <AreaChart data={filtered} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
         <defs>
           <linearGradient id="gradMessages" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="#d97706" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="#d97706" stopOpacity={0} />
+            <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.28} />
+            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="gradSessions" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="#34d399" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#34d399" stopOpacity={0} />
+            <stop offset="5%"  stopColor="#10b981" stopOpacity={0.2} />
+            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -145,16 +145,16 @@ export function UsageOverTimeChart({ data, days = 90, dateFrom, dateTo }: Props)
         <Area
           type="monotone"
           dataKey="messages"
-          stroke="#d97706"
+          stroke="#6366f1"
           strokeWidth={2}
           fill="url(#gradMessages)"
           dot={false}
-          activeDot={{ r: 3, fill: '#fbbf24' }}
+          activeDot={{ r: 3, fill: '#818cf8' }}
         />
         <Area
           type="monotone"
           dataKey="sessions"
-          stroke="#34d399"
+          stroke="#10b981"
           strokeWidth={1.5}
           fill="url(#gradSessions)"
           dot={false}

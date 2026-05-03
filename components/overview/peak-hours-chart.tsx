@@ -42,11 +42,9 @@ export function PeakHoursChart({ hourCounts }: Props) {
   const sorted = [...data].sort((a, b) => b.count - a.count)
   const top3Hours = new Set(sorted.slice(0, 3).map(d => d.hour))
 
-  // Light mode: bright amber for top, soft amber for rest
-  // Dark mode: keep the original darker tones
-  const topFill    = isDark ? '#d97706' : '#f59e0b'
-  const normalFill = isDark ? '#78350f' : '#fde68a'
-  const strokeColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.4)'
+  const topFill = isDark ? '#a5b4fc' : '#6366f1'
+  const normalFill = isDark ? '#312e81' : '#c7d2fe'
+  const strokeColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(79,70,229,0.28)'
 
   return (
     <div>
@@ -67,7 +65,7 @@ export function PeakHoursChart({ hourCounts }: Props) {
             }}
           />
           <YAxis hide />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(180,83,9,0.08)' }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(99,102,241,0.08)' }} />
           <Bar dataKey="count" radius={[2, 2, 0, 0]} maxBarSize={14}
                stroke={strokeColor} strokeWidth={0.75}>
             {data.map(d => (
@@ -79,7 +77,7 @@ export function PeakHoursChart({ hourCounts }: Props) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      <p className="text-[11px] font-mono text-muted-foreground/60 mt-1">
+      <p className="text-[11px] text-muted-foreground/60 mt-1">
         top 3 peak hours highlighted
       </p>
     </div>

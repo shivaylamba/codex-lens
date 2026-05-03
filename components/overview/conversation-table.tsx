@@ -123,8 +123,8 @@ export function OverviewConversationTable({ sessions }: Props) {
                 </TableCell>
                 <TableCell>
                   {isActive ? (
-                    <Badge variant="outline" className="text-[#34d399] border-[#34d399]/30 bg-[#34d399]/10 gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] inline-block" />
+                    <Badge variant="outline" className="text-[#10b981] border-[#10b981]/30 bg-[#10b981]/10 gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] inline-block" />
                       Active
                     </Badge>
                   ) : (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import useSWR from 'swr'
 import { BarChart3, PieChart, Clock, CalendarDays } from 'lucide-react'
 import { UsageOverTimeChart } from '@/components/overview/usage-over-time-chart'
@@ -20,6 +20,7 @@ import type { StatsCache, DailyActivity, DailyTokens } from '@/types/claude'
 import type { SessionWithFacet, ProjectSummary } from '@/types/claude'
 import { format, subDays } from 'date-fns'
 import { useTheme } from '@/components/theme-provider'
+import { CodexLogo } from '@/components/codex-logo'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,6 +46,7 @@ interface ApiResponse {
 
 type DatePreset = '7d' | '30d' | '90d'
 type CustomRange = { from?: Date; to?: Date }
+const DAY_MS = 24 * 60 * 60 * 1000
 
 const fetcher = (url: string) =>
   fetch(url).then(r => {
@@ -67,6 +69,30 @@ function computeTrend(
   const prevSum = previous.reduce((s, d) => s + (d[field] ?? 0), 0)
   if (prevSum === 0) return undefined
   return ((recentSum - prevSum) / prevSum) * 100
+}
+
+function percentChange(current: number, previous: number): number | undefined {
+  if (previous === 0) return undefined
+  return ((current - previous) / previous) * 100
+}
+
+function dateKey(date: Date): string {
+  return format(date, 'yyyy-MM-dd')
+}
+
+function inRange(date: string, from: string, to: string): boolean {
+  const key = date.slice(0, 10)
+  return key >= from && key <= to
+}
+
+function sumDailyActivity(days: DailyActivity[], field: 'messageCount' | 'sessionCount' | 'toolCallCount'): number {
+  return days.reduce((sum, day) => sum + (day[field] ?? 0), 0)
+}
+
+function sumDailyTokens(days: DailyTokens[]): number {
+  return days.reduce((sum, day) => (
+    sum + Object.values(day.tokensByModel ?? {}).reduce((inner, value) => inner + value, 0)
+  ), 0)
 }
 
 function getActivitySpark(dailyActivity: DailyActivity[], field: 'messageCount' | 'sessionCount', days = 14): number[] {
@@ -107,14 +133,14 @@ export function OverviewClient() {
 
   const usingCustom = !!(customRange.from && customRange.to)
   const chartDays = usingCustom
-    ? Math.ceil((customRange.to!.getTime() - customRange.from!.getTime()) / (24 * 60 * 60 * 1000))
+    ? Math.max(1, Math.floor((customRange.to!.getTime() - customRange.from!.getTime()) / DAY_MS) + 1)
     : datePreset === '7d' ? 7 : datePreset === '30d' ? 30 : 90
-  const effectiveDateFrom = usingCustom
-    ? format(customRange.from!, 'MM/dd/yyyy')
-    : format(subDays(new Date(), chartDays), 'MM/dd/yyyy')
-  const effectiveDateTo = usingCustom
-    ? format(customRange.to!, 'MM/dd/yyyy')
-    : format(new Date(), 'MM/dd/yyyy')
+  const rangeStart = usingCustom ? customRange.from! : subDays(new Date(), chartDays - 1)
+  const rangeEnd = usingCustom ? customRange.to! : new Date()
+  const rangeStartKey = dateKey(rangeStart)
+  const rangeEndKey = dateKey(rangeEnd)
+  const effectiveDateFrom = format(rangeStart, 'MM/dd/yyyy')
+  const effectiveDateTo = format(rangeEnd, 'MM/dd/yyyy')
 
   const pickerLabel = usingCustom
     ? `${format(customRange.from!, 'MMM d')} – ${format(customRange.to!, 'MMM d, yyyy')}`
@@ -123,7 +149,7 @@ export function OverviewClient() {
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading || !data || !data.computed) {
     return (
-      <div className="px-6 py-6 space-y-6">
+      <div className="space-y-6 px-4 py-5 md:px-6 md:py-6">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <Skeleton className="h-7 w-32" />
@@ -144,44 +170,98 @@ export function OverviewClient() {
 
   if (error) {
     return (
-      <div className="px-6 py-6 text-destructive text-sm font-mono">
-        ✗ error loading data: {String(error)}
+      <div className="px-4 py-5 text-sm text-destructive md:px-6 md:py-6">
+        Error loading data: {String(error)}
       </div>
     )
   }
 
   const { stats, computed } = data
 
-  const inputBlue = theme === 'light' ? '#1d4ed8' : '#60a5fa'
-  const tokenSegs = [
-    { label: 'input',       value: computed.totalInputTokens,      color: inputBlue },
-    { label: 'output',      value: computed.totalOutputTokens,     color: '#d97706' },
-    { label: 'cache read',  value: computed.totalCacheReadTokens,  color: '#34d399' },
-    { label: 'cache write', value: computed.totalCacheWriteTokens, color: '#a78bfa' },
-  ]
-  const totalTokens =
-    computed.totalInputTokens +
-    computed.totalOutputTokens +
-    computed.totalCacheReadTokens +
-    computed.totalCacheWriteTokens
-
   const tokensByDate = stats.dailyModelTokens ?? stats.tokensByDate ?? []
+  const selectedDailyActivity = stats.dailyActivity.filter(day => inRange(day.date, rangeStartKey, rangeEndKey))
+  const selectedDailyTokens = tokensByDate.filter(day => inRange(day.date, rangeStartKey, rangeEndKey))
+  const previousStartKey = dateKey(subDays(rangeStart, chartDays))
+  const previousEndKey = dateKey(subDays(rangeStart, 1))
+  const previousDailyActivity = stats.dailyActivity.filter(day => inRange(day.date, previousStartKey, previousEndKey))
+
+  const filteredSessions = sessions.filter(session => {
+    const key = dateKey(new Date(session.start_time))
+    return key >= rangeStartKey && key <= rangeEndKey
+  })
+  const hasSessionRangeData = !!sessionsData
+
+  const selectedSessionCount = hasSessionRangeData
+    ? filteredSessions.length
+    : sumDailyActivity(selectedDailyActivity, 'sessionCount')
+  const selectedMessageCount = hasSessionRangeData
+    ? filteredSessions.reduce((sum, session) => sum + (session.user_message_count ?? 0) + (session.assistant_message_count ?? 0), 0)
+    : sumDailyActivity(selectedDailyActivity, 'messageCount')
+  const selectedInputTokens = hasSessionRangeData
+    ? filteredSessions.reduce((sum, session) => sum + (session.input_tokens ?? 0), 0)
+    : 0
+  const selectedOutputTokens = hasSessionRangeData
+    ? filteredSessions.reduce((sum, session) => sum + (session.output_tokens ?? 0), 0)
+    : 0
+  const selectedCacheReadTokens = hasSessionRangeData
+    ? filteredSessions.reduce((sum, session) => sum + (session.cache_read_input_tokens ?? 0), 0)
+    : 0
+  const selectedCacheWriteTokens = hasSessionRangeData
+    ? filteredSessions.reduce((sum, session) => sum + (session.cache_creation_input_tokens ?? 0), 0)
+    : 0
+  const selectedTokenTotalFromSessions = selectedInputTokens + selectedOutputTokens + selectedCacheReadTokens + selectedCacheWriteTokens
+  const selectedTokenTotal = hasSessionRangeData ? selectedTokenTotalFromSessions : sumDailyTokens(selectedDailyTokens)
+  const selectedCost = hasSessionRangeData
+    ? filteredSessions.reduce((sum, session) => sum + (session.estimated_cost ?? 0), 0)
+    : 0
+  const selectedActiveDays = selectedDailyActivity.filter(day => day.messageCount > 0 || day.sessionCount > 0).length
+  const periodLabel = usingCustom ? 'custom range' : `last ${chartDays} days`
+
+  const inputBlue = theme === 'light' ? '#4f46e5' : '#a5b4fc'
+  const outputInk = theme === 'light' ? '#111827' : '#e5e7eb'
+  const tokenSegs = hasSessionRangeData
+    ? [
+        { label: 'input',       value: selectedInputTokens,      color: inputBlue },
+        { label: 'output',      value: selectedOutputTokens,     color: outputInk },
+        { label: 'cache read',  value: selectedCacheReadTokens,  color: '#10b981' },
+        { label: 'cache write', value: selectedCacheWriteTokens, color: '#8b5cf6' },
+      ]
+    : [
+        { label: 'total', value: selectedTokenTotal, color: inputBlue },
+      ]
 
   // Trends compare last N days vs previous N days (capped at 30 to avoid sparse data)
   const trendWindow = Math.min(Math.max(chartDays, 7), 30)
+  const selectedSessionTrend = percentChange(
+    selectedSessionCount,
+    sumDailyActivity(previousDailyActivity, 'sessionCount'),
+  ) ?? computeTrend(stats.dailyActivity, 'sessionCount', trendWindow)
+  const selectedMessageTrend = percentChange(
+    selectedMessageCount,
+    sumDailyActivity(previousDailyActivity, 'messageCount'),
+  ) ?? computeTrend(stats.dailyActivity, 'messageCount', trendWindow)
 
   return (
-    <div className="px-6 py-6 space-y-6 bg-background">
+    <div className="space-y-6 px-4 py-5 md:px-6 md:py-6">
 
       {/* ── Page header ───────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Overview</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {projectCount} projects · {formatBytes(computed.storageBytes)} stored
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <section className="-mx-4 -mt-5 border-b border-border/70 bg-[linear-gradient(135deg,rgba(219,234,254,0.82),rgba(224,231,255,0.78)_42%,rgba(249,250,251,0.62))] px-4 py-6 backdrop-blur-xl md:-mx-6 md:-mt-6 md:px-6 dark:bg-[linear-gradient(135deg,rgba(17,24,39,0.88),rgba(30,27,75,0.68)_55%,rgba(11,15,25,0.92))]">
+        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+          <div className="flex min-w-0 items-start gap-4">
+            <CodexLogo className="size-16 shrink-0" imageClassName="p-2" priority />
+            <div className="min-w-0">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#4f46e5] dark:text-[#c7d2fe]">
+                Local Codex Intelligence
+              </p>
+              <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-[-0.02em] text-foreground">
+                Codex dashboard for your ~/.codex workspace
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {projectCount} projects, {selectedSessionCount.toLocaleString()} sessions in {periodLabel}, and {formatBytes(computed.storageBytes)} of local Codex state summarized without cloud telemetry.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
           <Tabs
             value={usingCustom ? '' : datePreset}
             onValueChange={v => {
@@ -221,40 +301,41 @@ export function OverviewClient() {
             </PopoverContent>
           </Popover>
 
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* ── Stat cards ────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Sessions"
-          value={computed.sessionCount.toLocaleString()}
-          description={`${computed.sessionsThisMonth} this month · ${computed.sessionsThisWeek} this week`}
-          trend={computeTrend(stats.dailyActivity, 'sessionCount', trendWindow)}
-          sparkData={getActivitySpark(stats.dailyActivity, 'sessionCount')}
+          value={selectedSessionCount.toLocaleString()}
+          description={`${selectedActiveDays} active days · ${periodLabel}`}
+          trend={selectedSessionTrend}
+          sparkData={getActivitySpark(selectedDailyActivity, 'sessionCount', Math.min(chartDays, 30))}
           accentColor="var(--foreground)"
         />
         <StatCard
           title="Messages"
-          value={stats.totalMessages.toLocaleString()}
-          description={`${computed.activeDays} active days`}
-          trend={computeTrend(stats.dailyActivity, 'messageCount', trendWindow)}
-          sparkData={getActivitySpark(stats.dailyActivity, 'messageCount')}
-          accentColor="#d97706"
+          value={selectedMessageCount.toLocaleString()}
+          description={`${sumDailyActivity(selectedDailyActivity, 'toolCallCount').toLocaleString()} tool calls · ${periodLabel}`}
+          trend={selectedMessageTrend}
+          sparkData={getActivitySpark(selectedDailyActivity, 'messageCount', Math.min(chartDays, 30))}
+          accentColor="#6366f1"
         />
         <StatCard
           title="Tokens Used"
-          value={formatTokens(computed.totalTokens)}
-          description={`${formatTokens(computed.totalCacheReadTokens)} from cache`}
-          sparkData={getTokenSpark(tokensByDate)}
+          value={formatTokens(selectedTokenTotal)}
+          description={hasSessionRangeData ? `${formatTokens(selectedCacheReadTokens)} from cache` : `${periodLabel} aggregate`}
+          sparkData={getTokenSpark(selectedDailyTokens, Math.min(chartDays, 30))}
           accentColor={inputBlue}
         />
         <StatCard
           title="Estimated Cost"
-          value={`$${computed.totalCost.toFixed(2)}`}
-          description={`$${computed.totalCacheSavings.toFixed(2)} saved via cache`}
-          sparkData={getTokenSpark(tokensByDate)}
-          accentColor="#34d399"
+          value={`$${selectedCost.toFixed(2)}`}
+          description={`Pricing estimate · ${periodLabel}`}
+          sparkData={getTokenSpark(selectedDailyTokens, Math.min(chartDays, 30))}
+          accentColor="#10b981"
         />
       </div>
 
@@ -335,10 +416,10 @@ export function OverviewClient() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle>Token Breakdown</CardTitle>
-          <CardDescription>Distribution across token types (all time)</CardDescription>
+          <CardDescription>Distribution across token types ({periodLabel})</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {totalTokens > 0 ? (
+          {selectedTokenTotal > 0 ? (
             <>
               <div className="flex h-2 rounded-full overflow-hidden w-full bg-muted/40">
                 {tokenSegs.map(({ label, value, color }) => (
@@ -346,7 +427,7 @@ export function OverviewClient() {
                     key={label}
                     title={`${label}: ${formatTokens(value)}`}
                     style={{
-                      width: `${(value / totalTokens) * 100}%`,
+                      width: `${selectedTokenTotal > 0 ? (value / selectedTokenTotal) * 100 : 0}%`,
                       minWidth: value > 0 ? 2 : 0,
                       backgroundColor: color,
                     }}
@@ -365,7 +446,7 @@ export function OverviewClient() {
                       {formatTokens(value)}
                     </span>
                     <span className="text-[12px] text-muted-foreground/60">
-                      {Math.round((value / totalTokens) * 100)}%
+                      {Math.round((value / selectedTokenTotal) * 100)}%
                     </span>
                   </span>
                 ))}
@@ -381,7 +462,7 @@ export function OverviewClient() {
       <Card>
         <CardHeader>
           <CardTitle>Recent Sessions</CardTitle>
-          <CardDescription>Your latest Claude Code conversations</CardDescription>
+          <CardDescription>Your latest Codex sessions</CardDescription>
         </CardHeader>
         <CardContent>
           <OverviewConversationTable sessions={sessions} />

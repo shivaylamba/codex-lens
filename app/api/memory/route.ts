@@ -1,52 +1,23 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
-import os from 'os'
-import { readMemories } from '@/lib/claude-reader'
+import { readEditableFiles, writeEditableFile } from '@/lib/codex-reader'
 
 export const dynamic = 'force-dynamic'
 
-const CLAUDE_DIR = path.join(os.homedir(), '.claude')
-
 export async function GET() {
-  const memories = await readMemories()
-  return NextResponse.json({ memories })
+  const files = await readEditableFiles()
+  return NextResponse.json({ memories: files.filter(f => f.kind === 'memory'), files })
 }
 
 export async function PATCH(req: Request) {
-  try {
-    const { projectSlug, file, content } = await req.json() as {
-      projectSlug?: string
-      file?: string
-      content?: string
-    }
-
-    if (!projectSlug || !file || typeof content !== 'string') {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-    }
-
-    // Only allow .md files
-    if (!file.endsWith('.md')) {
-      return NextResponse.json({ error: 'Only .md files allowed' }, { status: 400 })
-    }
-
-    // Prevent path traversal — slug and file must be plain names (no slashes or dots)
-    if (/[/\\]/.test(projectSlug) || /[/\\]/.test(file)) {
-      return NextResponse.json({ error: 'Invalid path' }, { status: 400 })
-    }
-
-    const filePath = path.join(CLAUDE_DIR, 'projects', projectSlug, 'memory', file)
-
-    // Ensure the resolved path stays within ~/.claude/projects/
-    const allowedRoot = path.join(CLAUDE_DIR, 'projects')
-    if (!filePath.startsWith(allowedRoot + path.sep)) {
-      return NextResponse.json({ error: 'Path outside allowed directory' }, { status: 403 })
-    }
-
-    await fs.mkdir(path.dirname(filePath), { recursive: true })
-    await fs.writeFile(filePath, content, 'utf-8')
-    return NextResponse.json({ ok: true })
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+  const { relativePath, file, content } = await req.json().catch(() => ({})) as {
+    relativePath?: string
+    file?: string
+    content?: string
   }
+  if (typeof content !== 'string') {
+    return NextResponse.json({ error: 'Missing content' }, { status: 400 })
+  }
+  const ok = await writeEditableFile(relativePath ?? file ?? '', content)
+  if (!ok) return NextResponse.json({ error: 'File is not editable by Codex Lens' }, { status: 403 })
+  return NextResponse.json({ ok: true })
 }

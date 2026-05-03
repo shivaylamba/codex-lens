@@ -1,0 +1,8 @@
+import { NextResponse } from 'next/server'
+import { readSkills } from '@/lib/codex-reader'
+
+export const dynamic = 'force-dynamic'
+
+export async function GET() {
+  return NextResponse.json({ skills: await readSkills() })
+}

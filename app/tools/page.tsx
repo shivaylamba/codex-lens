@@ -50,7 +50,7 @@ export default function ToolsPage() {
                   <CardDescription className="flex items-center gap-2">
                     <Zap className="w-4 h-4" /> Tool Calls
                   </CardDescription>
-                  <CardTitle className="text-3xl font-bold tabular-nums text-[#d97706]">
+                  <CardTitle className="text-3xl font-bold tabular-nums text-[#6366f1]">
                     {data.total_tool_calls.toLocaleString()}
                   </CardTitle>
                 </CardHeader>
@@ -78,7 +78,7 @@ export default function ToolsPage() {
                   <CardDescription className="flex items-center gap-2">
                     <Server className="w-4 h-4" /> MCP Servers
                   </CardDescription>
-                  <CardTitle className="text-3xl font-bold tabular-nums text-[#34d399]">
+                  <CardTitle className="text-3xl font-bold tabular-nums text-[#10b981]">
                     {data.mcp_servers.length}
                   </CardTitle>
                 </CardHeader>
@@ -201,8 +201,8 @@ export default function ToolsPage() {
             {data.versions.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Claude Code Version History</CardTitle>
-                  <CardDescription>Versions seen across your sessions</CardDescription>
+                  <CardTitle>Codex CLI Version History</CardTitle>
+                  <CardDescription>CLI versions seen across your sessions</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <VersionHistoryTable versions={data.versions} />
@@ -231,7 +231,7 @@ export default function ToolsPage() {
                         <div key={branch} className="flex items-center gap-3">
                           <span className="text-sm text-muted-foreground w-28 truncate font-mono">{branch}</span>
                           <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                            <div className="h-full rounded-full bg-[#34d399]/50" style={{ width: `${width}%` }} />
+                            <div className="h-full rounded-full bg-[#10b981]/50" style={{ width: `${width}%` }} />
                           </div>
                           <span className="text-xs text-muted-foreground tabular-nums w-24 text-right">{turns.toLocaleString()} turns</span>
                         </div>

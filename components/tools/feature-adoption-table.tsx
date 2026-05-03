@@ -4,10 +4,14 @@ interface Props {
 }
 
 const FEATURE_LABELS: Record<string, { label: string; icon: string }> = {
+  agents:           { label: 'Agents',             icon: 'A' },
   task_agents:      { label: 'Task Agents',        icon: '🤖' },
   mcp:              { label: 'MCP Servers',         icon: '🔌' },
   web_search:       { label: 'Web Search',          icon: '🔍' },
   web_fetch:        { label: 'Web Fetch',           icon: '🌐' },
+  image_generation: { label: 'Image Generation',    icon: 'I' },
+  patching:         { label: 'Patch Apply',         icon: 'P' },
+  shell:            { label: 'Shell Commands',      icon: '$' },
   plan_mode:        { label: 'Plan Mode',           icon: '📋' },
   git_commits:      { label: 'Git Commits',         icon: '📦' },
   extended_thinking: { label: 'Extended Thinking',  icon: '🧠' },
@@ -41,10 +45,10 @@ export function FeatureAdoptionTable({ adoption, totalSessions }: Props) {
                   <span className="text-foreground/80">{r.label}</span>
                 </td>
                 <td className="py-2 text-right text-foreground font-bold">{r.sessions}</td>
-                <td className="py-2 text-right text-[#d97706]">{pct}%</td>
+                <td className="py-2 text-right text-[#6366f1]">{pct}%</td>
                 <td className="py-2 pl-4">
                   <div className="h-2 bg-muted rounded-full overflow-hidden w-24">
-                    <div className="h-full rounded-full bg-[#d97706]/60" style={{ width: `${width}%` }} />
+                    <div className="h-full rounded-full bg-[#6366f1]/60" style={{ width: `${width}%` }} />
                   </div>
                 </td>
               </tr>

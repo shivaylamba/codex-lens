@@ -27,9 +27,9 @@ function TokenBreakdown({ turn }: { turn: ReplayTurn }) {
   const u = turn.usage
   const items = [
     u.input_tokens       ? { label: 'In',     value: u.input_tokens,       color: 'var(--viz-sky)' } : null,
-    u.output_tokens      ? { label: 'Out',    value: u.output_tokens,      color: '#d97706' } : null,
-    u.cache_creation_input_tokens ? { label: 'cW', value: u.cache_creation_input_tokens, color: '#a78bfa' } : null,
-    u.cache_read_input_tokens     ? { label: 'cR', value: u.cache_read_input_tokens,     color: '#34d399' } : null,
+    u.output_tokens      ? { label: 'Out',    value: u.output_tokens,      color: '#6366f1' } : null,
+    u.cache_creation_input_tokens ? { label: 'cW', value: u.cache_creation_input_tokens, color: '#8b5cf6' } : null,
+    u.cache_read_input_tokens     ? { label: 'cR', value: u.cache_read_input_tokens,     color: '#10b981' } : null,
   ].filter(Boolean) as { label: string; value: number; color: string }[]
 
   if (items.length === 0) return null
@@ -47,7 +47,7 @@ function TokenBreakdown({ turn }: { turn: ReplayTurn }) {
         </span>
       ))}
       {turn.estimated_cost ? (
-        <span className="text-[11px] font-mono text-[#d97706] px-1 py-0.5">
+        <span className="text-[11px] font-mono text-[#6366f1] px-1 py-0.5">
           {formatCost(turn.estimated_cost)}
         </span>
       ) : null}
@@ -55,7 +55,7 @@ function TokenBreakdown({ turn }: { turn: ReplayTurn }) {
   )
 }
 
-export function UserTurnCard({ turn, compactionBefore, toolResults }: TurnCardProps) {
+export function UserTurnCard({ turn, compactionBefore }: TurnCardProps) {
   return (
     <div>
       {compactionBefore && <CompactionCard event={compactionBefore} />}
@@ -99,7 +99,7 @@ export function AssistantTurnCard({ turn, turnNumber, toolResults }: TurnCardPro
     : turn.model?.includes('sonnet-4-5') ? 'Sonnet 4.5'
     : turn.model?.includes('sonnet')   ? 'Sonnet'
     : turn.model?.includes('haiku')    ? 'Haiku'
-    : turn.model ?? 'Claude'
+    : turn.model ?? 'Codex'
 
   const textToShow = turn.text ?? ''
   const needsExpandToggle = textToShow.length > ASSISTANT_COLLAPSE_THRESHOLD
@@ -112,7 +112,7 @@ export function AssistantTurnCard({ turn, turnNumber, toolResults }: TurnCardPro
           <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
             <span className="text-[10px] font-bold text-primary">C</span>
           </div>
-          <span className="text-xs font-semibold text-primary/80">Claude</span>
+          <span className="text-xs font-semibold text-primary/80">Codex</span>
         </div>
         <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-5 font-mono">
           {modelShort}

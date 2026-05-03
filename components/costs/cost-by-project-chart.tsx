@@ -38,7 +38,7 @@ export function CostByProjectChart({ projects }: Props) {
           />
           <Bar dataKey="estimated_cost" radius={[0, 3, 3, 0]}>
             {top.map((_, i) => (
-              <Cell key={i} fill={i === 0 ? '#d97706' : '#d97706' + Math.max(30, 100 - i * 7).toString(16)} />
+              <Cell key={i} fill={i === 0 ? '#6366f1' : '#6366f1' + Math.max(30, 100 - i * 7).toString(16)} />
             ))}
           </Bar>
         </BarChart>

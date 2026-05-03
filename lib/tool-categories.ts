@@ -3,6 +3,7 @@ export type ToolCategory =
   | 'shell'
   | 'agent'
   | 'web'
+  | 'image'
   | 'planning'
   | 'todo'
   | 'skill'
@@ -16,8 +17,12 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   Glob:           'file-io',
   Grep:           'file-io',
   NotebookEdit:   'file-io',
+  view_image:     'file-io',
 
   Bash:           'shell',
+  exec_command:   'shell',
+  write_stdin:    'shell',
+  apply_patch:    'file-io',
 
   Task:           'agent',
   TaskCreate:     'agent',
@@ -26,18 +31,31 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   TaskOutput:     'agent',
   TaskStop:       'agent',
   TaskGet:        'agent',
+  spawn_agent:    'agent',
+  wait_agent:     'agent',
+  close_agent:    'agent',
+  send_input:     'agent',
+  resume_agent:   'agent',
 
   WebSearch:      'web',
   WebFetch:       'web',
+  web_search:     'web',
+  web_search_exa: 'web',
+
+  image_generation: 'image',
 
   EnterPlanMode:  'planning',
   ExitPlanMode:   'planning',
   AskUserQuestion:'planning',
+  update_plan:    'planning',
+  request_user_input: 'planning',
 
   TodoWrite:      'todo',
 
   Skill:          'skill',
   ToolSearch:     'skill',
+  tool_search:    'skill',
+  tool_search_tool: 'skill',
   ListMcpResourcesTool: 'skill',
   ReadMcpResourceTool:  'skill',
 }
@@ -48,6 +66,7 @@ export const CATEGORY_COLORS: Record<ToolCategory, string> = {
   'shell':    'var(--viz-tool-shell)',
   'agent':    'var(--viz-tool-agent)',
   'web':      'var(--viz-tool-web)',
+  'image':    'var(--viz-tool-image)',
   'planning': 'var(--viz-tool-planning)',
   'todo':     'var(--viz-tool-todo)',
   'skill':    'var(--viz-tool-skill)',
@@ -87,6 +106,7 @@ export const CATEGORY_LABELS: Record<ToolCategory, string> = {
   'shell':    'Shell',
   'agent':    'Agents',
   'web':      'Web',
+  'image':    'Images',
   'planning': 'Planning',
   'todo':     'Todo',
   'skill':    'Skills',
@@ -119,6 +139,7 @@ export const TOOL_ICONS: Record<ToolCategory, string> = {
   'shell':    '⚡',
   'agent':    '🤖',
   'web':      '🌐',
+  'image':    '🖼️',
   'planning': '📋',
   'todo':     '✅',
   'skill':    '🎯',

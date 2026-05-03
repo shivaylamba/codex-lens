@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { findSessionJSONL } from '@/lib/claude-reader'
-import { parseSessionReplay } from '@/lib/replay-parser'
+import { findSessionJSONL, parseSessionReplay } from '@/lib/codex-reader'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,9 +9,8 @@ export async function GET(
 ) {
   const { id } = await params
   const jsonlPath = await findSessionJSONL(id)
-
   if (!jsonlPath) {
-    return NextResponse.json({ error: 'Session JSONL not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Codex rollout JSONL not found' }, { status: 404 })
   }
 
   const replay = await parseSessionReplay(jsonlPath, id)

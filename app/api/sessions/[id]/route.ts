@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { readSessionMeta, readFacet, getSessions } from '@/lib/claude-reader'
+import { readSessionMeta } from '@/lib/codex-reader'
 import { estimateCostFromUsage } from '@/lib/pricing'
 
 export const dynamic = 'force-dynamic'
@@ -9,23 +9,20 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const [meta, facet] = await Promise.all([readSessionMeta(id), readFacet(id)])
+  const session = await readSessionMeta(id)
+  if (!session) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
-  // readSessionMeta only finds session-meta/*.json files (legacy path).
-  // Fall back to JSONL-derived sessions for machines without that directory.
-  const resolved = meta ?? (await getSessions()).find(s => s.session_id === id) ?? null
-
-  if (!resolved) {
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 })
-  }
-
-  const estimated_cost = estimateCostFromUsage('claude-opus-4-6', {
-    input_tokens: resolved.input_tokens ?? 0,
-    output_tokens: resolved.output_tokens ?? 0,
-    cache_creation_input_tokens: resolved.cache_creation_input_tokens ?? 0,
-    cache_read_input_tokens: resolved.cache_read_input_tokens ?? 0,
+  return NextResponse.json({
+    session: {
+      ...session,
+      estimated_cost: estimateCostFromUsage(session.model ?? 'unknown', {
+        input_tokens: session.input_tokens ?? 0,
+        output_tokens: session.output_tokens ?? 0,
+        cache_creation_input_tokens: session.cache_creation_input_tokens ?? 0,
+        cache_read_input_tokens: session.cache_read_input_tokens ?? 0,
+      }),
+      version: session.cli_version,
+      has_thinking: (session.reasoning_output_tokens ?? 0) > 0,
+    },
   })
-
-  return NextResponse.json({ session: { ...resolved, facet, estimated_cost } })
 }
-

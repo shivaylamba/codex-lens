@@ -17,11 +17,11 @@ interface Props {
 
 /** Solid hex only — Recharts SVG `fill` does not resolve `var(--*)` reliably (shows as black). */
 const PROJECT_COLORS = [
-  '#d97706',
-  '#16a34a',
-  '#2563eb',
-  '#ea580c',
-  '#34d399',
+  '#6366f1',
+  '#10b981',
+  '#06b6d4',
+  '#8b5cf6',
+  '#f59e0b',
   '#64748b',
 ]
 

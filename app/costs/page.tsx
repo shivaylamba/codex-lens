@@ -6,7 +6,7 @@ import { CostOverTimeChart } from '@/components/costs/cost-over-time-chart'
 import { CostByProjectChart } from '@/components/costs/cost-by-project-chart'
 import { ModelTokenTable } from '@/components/costs/model-token-table'
 import { CacheEfficiencyPanel } from '@/components/costs/cache-efficiency-panel'
-import { formatCost, formatTokens } from '@/lib/decode'
+import { formatCost } from '@/lib/decode'
 import { PRICING } from '@/lib/pricing'
 import type { CostAnalytics } from '@/types/claude'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,7 +23,7 @@ export default function CostsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <TopBar title="Costs" subtitle="Estimated spend from ~/.claude/" />
+      <TopBar title="Costs" subtitle="Token usage from ~/.codex; pricing defaults to zero until configured" />
       <div className="p-6 space-y-6">
 
         {error && (
@@ -51,12 +51,12 @@ export default function CostsPage() {
                   <CardDescription className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4" /> Total Estimated Cost
                   </CardDescription>
-                  <CardTitle className="text-3xl font-bold tabular-nums text-[#d97706]">
+                  <CardTitle className="text-3xl font-bold tabular-nums text-[#6366f1]">
                     {formatCost(data.total_cost)}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-xs text-muted-foreground">All time spend across all projects</p>
+                  <p className="text-xs text-muted-foreground">All time estimate across all projects</p>
                 </CardContent>
               </Card>
 
@@ -65,7 +65,7 @@ export default function CostsPage() {
                   <CardDescription className="flex items-center gap-2">
                     <TrendingDown className="w-4 h-4" /> Cache Savings
                   </CardDescription>
-                  <CardTitle className="text-3xl font-bold tabular-nums text-[#34d399]">
+                  <CardTitle className="text-3xl font-bold tabular-nums text-[#10b981]">
                     {formatCost(data.total_savings)}
                   </CardTitle>
                 </CardHeader>
@@ -161,10 +161,10 @@ export default function CostsPage() {
                     {Object.entries(PRICING).map(([model, p]) => (
                       <TableRow key={model}>
                         <TableCell className="font-mono text-sm">{model}</TableCell>
-                        <TableCell className="text-right font-mono text-blue-700 dark:text-[#60a5fa]">${(p.input * 1_000_000).toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono text-[#d97706]">${(p.output * 1_000_000).toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono text-[#a78bfa]">${(p.cacheWrite * 1_000_000).toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono text-[#34d399]">${(p.cacheRead * 1_000_000).toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono text-blue-700 dark:text-[#a5b4fc]">${(p.input * 1_000_000).toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono text-[#6366f1]">${(p.output * 1_000_000).toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono text-[#8b5cf6]">${(p.cacheWrite * 1_000_000).toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono text-[#10b981]">${(p.cacheRead * 1_000_000).toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

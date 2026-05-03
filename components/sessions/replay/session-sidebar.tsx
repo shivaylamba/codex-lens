@@ -49,10 +49,10 @@ export function SessionSidebar({ replay, meta }: Props) {
   const assistantTurns = replay.turns.filter(t => t.type === 'assistant')
 
   const tokenBreakdown = [
-    { label: 'Input', val: totalInput, color: 'var(--viz-sky)', bg: 'bg-blue-700 dark:bg-blue-400' },
-    { label: 'Output', val: totalOutput, color: '#d97706', bg: 'bg-amber-500' },
-    { label: 'Cache Write', val: totalCacheWrite, color: '#a78bfa', bg: 'bg-violet-400' },
-    { label: 'Cache Read', val: totalCacheRead, color: '#34d399', bg: 'bg-emerald-400' },
+    { label: 'Input', val: totalInput, color: 'var(--viz-sky)', bg: 'bg-indigo-600 dark:bg-indigo-300' },
+    { label: 'Output', val: totalOutput, color: '#6366f1', bg: 'bg-slate-900 dark:bg-slate-200' },
+    { label: 'Cache Write', val: totalCacheWrite, color: '#8b5cf6', bg: 'bg-violet-500' },
+    { label: 'Cache Read', val: totalCacheRead, color: '#10b981', bg: 'bg-emerald-500' },
   ]
 
   const showTools = topTools.length > 0
@@ -88,7 +88,7 @@ export function SessionSidebar({ replay, meta }: Props) {
             <span className="text-xs font-semibold text-muted-foreground">Total</span>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-foreground">{formatTokens(totalTokens)}</span>
-              <span className="font-mono text-xs font-bold text-[#d97706]">{formatCost(replay.total_cost)}</span>
+              <span className="font-mono text-xs font-bold text-[#6366f1]">{formatCost(replay.total_cost)}</span>
             </div>
           </div>
         </div>
@@ -109,7 +109,7 @@ export function SessionSidebar({ replay, meta }: Props) {
                       {shortName}
                     </span>
                     <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-[#d97706]/60" style={{ width: `${width}%` }} />
+                      <div className="h-full rounded-full bg-[#6366f1]/60" style={{ width: `${width}%` }} />
                     </div>
                     <span className="w-5 text-right text-xs tabular-nums text-muted-foreground/60">{count}</span>
                   </div>

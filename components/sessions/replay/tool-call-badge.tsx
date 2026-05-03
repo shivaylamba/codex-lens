@@ -15,7 +15,6 @@ import {
   Plug,
   Bot,
   ChevronDown,
-  type LucideIcon,
 } from 'lucide-react'
 
 function truncate(s: string, n = 80): string {
@@ -36,28 +35,29 @@ function getToolArg(tool: ToolCall): string {
   return ''
 }
 
-function getToolIcon(name: string): LucideIcon {
-  if (name === 'Task') return Bot
-  if (name === 'WebSearch') return Search
-  if (name === 'WebFetch') return Globe
-  if (name === 'EnterPlanMode') return ClipboardList
-  if (name === 'ExitPlanMode') return CheckCircle2
-  if (name === 'TodoWrite') return ListTodo
-  if (isMcpTool(name)) return Plug
-  return Wrench
+function renderToolIcon(name: string, color: string) {
+  const className = "h-3.5 w-3.5 shrink-0 opacity-80"
+  const style = { color }
+  if (name === 'Task' || name === 'spawn_agent') return <Bot className={className} style={style} />
+  if (name === 'WebSearch' || name === 'web_search') return <Search className={className} style={style} />
+  if (name === 'WebFetch') return <Globe className={className} style={style} />
+  if (name === 'EnterPlanMode' || name === 'update_plan') return <ClipboardList className={className} style={style} />
+  if (name === 'ExitPlanMode') return <CheckCircle2 className={className} style={style} />
+  if (name === 'TodoWrite') return <ListTodo className={className} style={style} />
+  if (isMcpTool(name)) return <Plug className={className} style={style} />
+  return <Wrench className={className} style={style} />
 }
 
 export function ToolCallBadge({ tool, result }: { tool: ToolCall; result?: { content: string; is_error: boolean } }) {
   const [expanded, setExpanded] = useState(false)
   const color = toolBarColor(tool.name)
   const mcp = parseMcpTool(tool.name)
-  const Icon = getToolIcon(tool.name)
   const arg = getToolArg(tool)
   const displayName = mcp ? `${mcp.server} · ${mcp.tool}` : tool.name
 
   return (
     <div
-      className="overflow-hidden rounded-lg border text-sm font-mono"
+      className="overflow-hidden rounded-lg border text-sm"
       style={{
         borderColor: categoryColorMix(color, 32),
         backgroundColor: categoryColorMix(color, 9),
@@ -70,13 +70,13 @@ export function ToolCallBadge({ tool, result }: { tool: ToolCall; result?: { con
         onClick={() => setExpanded(e => !e)}
         className={cn(
           'h-auto min-h-8 w-full justify-between gap-2 rounded-none border-0 bg-transparent px-2.5 py-2 text-left shadow-none hover:bg-muted/50',
-          'font-mono text-sm'
+          'text-sm'
         )}
         style={{ color: 'var(--foreground)' }}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
-          <Icon className="h-3.5 w-3.5 shrink-0 opacity-80" style={{ color }} />
-          <span className="font-bold" style={{ color }}>
+          {renderToolIcon(tool.name, color)}
+          <span className="font-semibold" style={{ color }}>
             {displayName}
           </span>
           {arg ? <span className="truncate text-muted-foreground">{arg}</span> : null}
@@ -94,7 +94,7 @@ export function ToolCallBadge({ tool, result }: { tool: ToolCall; result?: { con
         <div className="space-y-2 border-t px-2.5 py-2.5" style={{ borderColor: categoryColorMix(color, 24) }}>
           <div>
             <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">Input</p>
-            <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded-md border border-border/50 bg-background/80 p-2 text-xs text-muted-foreground">
+            <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded-md border border-[#1f2937] bg-[#0b0f19] p-2 font-mono text-xs text-[#e5e7eb]">
               {truncate(JSON.stringify(tool.input, null, 2), 500)}
             </pre>
           </div>
@@ -113,7 +113,7 @@ export function ToolCallBadge({ tool, result }: { tool: ToolCall; result?: { con
                   'max-h-32 overflow-auto whitespace-pre-wrap break-all rounded-md border p-2 text-xs',
                   result.is_error
                     ? 'border-red-500/25 bg-red-950/20 text-red-200/90'
-                    : 'border-border/50 bg-background/80 text-muted-foreground'
+                    : 'border-[#1f2937] bg-[#0b0f19] font-mono text-[#e5e7eb]'
                 )}
               >
                 {truncate(result.content, 500)}

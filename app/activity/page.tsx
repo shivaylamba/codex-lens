@@ -100,7 +100,7 @@ export default function ActivityPage() {
                 value={data.streaks.current}
                 sub="consecutive days"
                 icon={Flame}
-                color="#f97316"
+                color="#6366f1"
               />
               <StatTile
                 label="Longest Streak"
@@ -114,14 +114,14 @@ export default function ActivityPage() {
                 value={data.total_active_days}
                 sub="total days with activity"
                 icon={TrendingUp}
-                color="#a78bfa"
+                color="#8b5cf6"
               />
               <StatTile
                 label="Most Active Day"
                 value={data.most_active_day ? data.most_active_day.slice(5) : '—'}
                 sub={data.most_active_day_msgs ? `${data.most_active_day_msgs.toLocaleString()} messages` : 'no data'}
                 icon={Star}
-                color="#34d399"
+                color="#10b981"
               />
             </div>
 
@@ -175,7 +175,7 @@ export default function ActivityPage() {
                     <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
                     Day of Week
                   </CardTitle>
-                  <CardDescription>Which days you use Claude Code most</CardDescription>
+                  <CardDescription>Which days you use Codex most</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col justify-between pt-3 pb-0">
                   <DayOfWeekChart data={data.dow_counts} />

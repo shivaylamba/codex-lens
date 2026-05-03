@@ -101,7 +101,7 @@ export default function ProjectsPage() {
 
         {!isLoading && sorted.length === 0 && (
           <div className="text-center py-16 text-muted-foreground text-sm">
-            {search ? 'No projects match your search.' : 'No projects found in ~/.claude/'}
+            {search ? 'No projects match your search.' : 'No projects found in ~/.codex/'}
           </div>
         )}
       </div>

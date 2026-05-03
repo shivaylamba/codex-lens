@@ -18,7 +18,7 @@ export function VersionHistoryTable({ versions }: Props) {
         </thead>
         <tbody>
           {versions.map((v, i) => (
-            <tr key={v.version} className={`border-b border-border/30 hover:bg-muted/30 transition-colors ${i === 0 ? 'text-[#34d399]' : 'text-foreground/70'}`}>
+            <tr key={v.version} className={`border-b border-border/30 hover:bg-muted/30 transition-colors ${i === 0 ? 'text-[#10b981]' : 'text-foreground/70'}`}>
               <td className="py-2 font-bold">{v.version}</td>
               <td className="py-2 text-right">{v.session_count}</td>
               <td className="py-2 text-right text-muted-foreground">{v.first_seen ? formatDate(v.first_seen) : '—'}</td>

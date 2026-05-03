@@ -1,4 +1,4 @@
-// ─── Stats Cache ─────────────────────────────────────────────────────────────
+// Component-facing analytics types for Codex Lens.
 
 export interface DailyActivity {
   date: string
@@ -17,6 +17,7 @@ export interface ModelUsage {
   outputTokens: number
   cacheReadInputTokens: number
   cacheCreationInputTokens: number
+  reasoningOutputTokens?: number
   costUSD: number
   webSearchRequests: number
 }
@@ -43,8 +44,6 @@ export interface StatsCache {
   totalSpeculationTimeSavedMs: number
 }
 
-// ─── Session Meta ─────────────────────────────────────────────────────────────
-
 export interface SessionMeta {
   session_id: string
   project_path: string
@@ -60,6 +59,7 @@ export interface SessionMeta {
   output_tokens: number
   cache_creation_input_tokens?: number
   cache_read_input_tokens?: number
+  reasoning_output_tokens?: number
   first_prompt: string
   user_interruptions: number
   user_response_times: number[]
@@ -74,9 +74,21 @@ export interface SessionMeta {
   files_modified: number
   message_hours: number[]
   user_message_timestamps: string[]
+  model?: string
+  model_provider?: string
+  source?: string
+  cli_version?: string
+  git_branch?: string
+  sandbox_policy?: string
+  approval_mode?: string
+  archived?: boolean
+  rollout_path?: string
+  title?: string
+  reasoning_effort?: string
+  agent_nickname?: string
+  agent_role?: string
+  memory_mode?: string
 }
-
-// ─── Facets ──────────────────────────────────────────────────────────────────
 
 export interface Facet {
   session_id: string
@@ -92,25 +104,22 @@ export interface Facet {
   brief_summary: string
 }
 
-// ─── Session with Facet joined ───────────────────────────────────────────────
-
 export interface SessionWithFacet extends SessionMeta {
   facet?: Facet
   estimated_cost: number
   slug?: string
   version?: string
-  git_branch?: string
   has_compaction?: boolean
   has_thinking?: boolean
 }
-
-// ─── Replay / JSONL ──────────────────────────────────────────────────────────
 
 export interface TurnUsage {
   input_tokens: number
   output_tokens: number
   cache_creation_input_tokens: number
   cache_read_input_tokens: number
+  reasoning_output_tokens?: number
+  total_tokens?: number
   cache_creation?: {
     ephemeral_5m_input_tokens: number
     ephemeral_1h_input_tokens: number
@@ -142,6 +151,7 @@ export interface ReplayTurn {
   estimated_cost?: number
   turn_duration_ms?: number
   response_time_s?: number
+  event_type?: string
 }
 
 export interface CompactionEvent {
@@ -168,9 +178,8 @@ export interface ReplayData {
   compactions: CompactionEvent[]
   summaries: SummaryEvent[]
   total_cost: number
+  raw_event_count?: number
 }
-
-// ─── Project Summary ──────────────────────────────────────────────────────────
 
 export interface ProjectSummary {
   slug: string
@@ -194,9 +203,9 @@ export interface ProjectSummary {
   uses_mcp: boolean
   uses_task_agent: boolean
   branches: string[]
+  models?: string[]
+  sources?: string[]
 }
-
-// ─── Tool Analytics ───────────────────────────────────────────────────────────
 
 export interface ToolSummary {
   name: string
@@ -231,8 +240,6 @@ export interface ToolsAnalytics {
   total_errors: number
 }
 
-// ─── Cost Analytics ───────────────────────────────────────────────────────────
-
 export interface ModelCostBreakdown {
   model: string
   input_tokens: number
@@ -242,6 +249,7 @@ export interface ModelCostBreakdown {
   estimated_cost: number
   cache_savings: number
   cache_hit_rate: number
+  reasoning_output_tokens?: number
 }
 
 export interface DailyCost {
@@ -266,16 +274,15 @@ export interface CostAnalytics {
   by_project: ProjectCost[]
 }
 
-// ─── History ──────────────────────────────────────────────────────────────────
-
 export interface HistoryEntry {
-  display: string
-  timestamp: number
-  project: string
+  display?: string
+  timestamp?: number
+  project?: string
   sessionId?: string
+  session_id?: string
+  ts?: number
+  text?: string
 }
-
-// ─── Export ──────────────────────────────────────────────────────────────────
 
 export interface ExportPayload {
   exportedAt: string
@@ -284,6 +291,7 @@ export interface ExportPayload {
   sessions: SessionMeta[]
   facets: Facet[]
   history: HistoryEntry[]
+  inventory?: CodexInventoryItem[]
 }
 
 export interface ImportDiff {
@@ -291,4 +299,97 @@ export interface ImportDiff {
   already_present: number
   new_sessions: number
   sessions_to_add: SessionMeta[]
+}
+
+export interface CodexInventoryItem {
+  path: string
+  relativePath: string
+  kind: 'file' | 'directory'
+  category: string
+  sizeBytes: number
+  mtime: string
+  redacted: boolean
+  previewable: boolean
+}
+
+export interface CodexInventorySummary {
+  root: string
+  totalBytes: number
+  totalFiles: number
+  totalDirectories: number
+  categories: Array<{ category: string; bytes: number; files: number }>
+  topLevel: Array<{ name: string; bytes: number; files: number; directories: number }>
+  items: CodexInventoryItem[]
+}
+
+export interface CodexConfigSummary {
+  root: string
+  config: Record<string, unknown>
+  configPreview: string
+  trustedProjects: Array<{ path: string; trust_level: string }>
+  mcpServers: Array<{ name: string; transport: string; command?: string; url?: string }>
+  plugins: Array<{ id: string; enabled: boolean }>
+  marketplaces: Array<{ id: string; source_type?: string; last_updated?: string }>
+  models: Array<Record<string, unknown>>
+  globalStateKeys: string[]
+  versionState: Record<string, unknown>
+}
+
+export interface CodexSkillSummary {
+  name: string
+  description: string
+  path: string
+  relativePath: string
+  source: 'user' | 'system' | 'plugin' | 'external'
+  sourceLabel: string
+  plugin?: string
+  version?: string
+  userInvocable?: boolean
+}
+
+export interface CodexLogSummary {
+  total: number
+  levels: Array<{ level: string; count: number }>
+  targets: Array<{ target: string; count: number }>
+  recent: Array<{
+    id: number
+    ts: number
+    level: string
+    target: string
+    module_path?: string
+    file?: string
+    line?: number
+    thread_id?: string
+    message?: string
+  }>
+}
+
+export interface CodexAsset {
+  path: string
+  relativePath: string
+  kind: 'image' | 'pet' | 'snapshot' | 'suggestion' | 'other'
+  sizeBytes: number
+  mtime: string
+  href?: string
+  title: string
+  metadata?: Record<string, unknown>
+}
+
+export interface CodexAgentSummary {
+  spawn_edges: Array<{ parent_thread_id: string; child_thread_id: string; status: string }>
+  dynamic_tools: Array<{ thread_id: string; name: string; namespace?: string; defer_loading?: boolean }>
+  jobs: Array<Record<string, unknown>>
+  agent_jobs: Array<Record<string, unknown>>
+  goals: Array<Record<string, unknown>>
+  automations: Array<Record<string, unknown>>
+  automation_runs: Array<Record<string, unknown>>
+}
+
+export interface EditableFile {
+  path: string
+  relativePath: string
+  kind: 'agent' | 'rule' | 'memory'
+  content: string
+  mtime: string
+  sizeBytes: number
 }

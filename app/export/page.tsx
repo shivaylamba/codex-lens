@@ -146,7 +146,7 @@ export default function ExportPage() {
     <div className="flex flex-col min-h-screen">
       <TopBar
         title="Export & import"
-        subtitle="Download a portable backup of ~/.claude/ analytics or merge data from another machine"
+        subtitle="Download a portable backup of ~/.codex analytics or preview a merge from another machine"
       />
 
       <div className="p-6 space-y-6 flex-1">
@@ -163,7 +163,7 @@ export default function ExportPage() {
           <div>
             <h2 className="text-lg font-semibold tracking-tight">What will be exported</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              One JSON file includes stats cache, session metadata, facets, and command history. Numbers below respect the optional date range.
+              One JSON file includes local stats, session metadata, command history, and a redacted inventory sample. Numbers below respect the optional date range.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -239,7 +239,7 @@ export default function ExportPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-xs text-muted-foreground">From ~/.claude/ when available</p>
+                    <p className="text-xs text-muted-foreground">Derived from ~/.codex on demand</p>
                   </CardContent>
                 </Card>
               </>
@@ -436,7 +436,7 @@ export default function ExportPage() {
                       <Alert className="border-amber-500/40 bg-amber-500/5">
                         <AlertTriangle className="h-4 w-4 text-amber-600" />
                         <AlertDescription className="text-xs text-amber-800 dark:text-amber-200/90">
-                          Writing merged data to ~/.claude/ is not implemented in this build — this is a preview only.
+                          Writing merged data to ~/.codex is not implemented in this build - this is a preview only.
                         </AlertDescription>
                       </Alert>
                       <div className="max-h-36 overflow-auto rounded-md border border-border/60 bg-background/50 space-y-1 p-2 font-mono text-[11px] text-muted-foreground">
