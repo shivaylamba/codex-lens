@@ -7,7 +7,7 @@
   "homepage": "https://github.com/shivaylamba/codex-lens#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shivaylamba/codex-lens.git"
+    "url": "git+https://github.com/shivaylamba/codex-lens.git"
   },
   "keywords": [
     "codex",
