@@ -37,7 +37,7 @@ const MAX_PREVIEW_BYTES = 80_000
 const MAX_INVENTORY_ITEMS = 5_000
 const MAX_FALLBACK_ROLLOUTS = Number(process.env.CODEX_LENS_MAX_FALLBACK_ROLLOUTS ?? 500)
 const MAX_REPLAY_EVENTS = Number(process.env.CODEX_LENS_MAX_REPLAY_EVENTS ?? 25_000)
-const ROLLOUT_SUMMARY_CACHE_VERSION = 1
+const ROLLOUT_SUMMARY_CACHE_VERSION = 2
 const ROLLOUT_SUMMARY_CONCURRENCY = Number(process.env.CODEX_LENS_SUMMARY_CONCURRENCY ?? 2)
 const SESSION_CACHE_TTL_MS = Number(process.env.CODEX_LENS_SESSION_CACHE_TTL_MS ?? 30_000)
 
@@ -531,7 +531,12 @@ async function summarizeRolloutLight(filePath: string, thread?: ThreadRow): Prom
         continue
       }
 
-      if (payloadType === 'agent_message' || payloadType === 'message') {
+      if (payloadType === 'agent_message') {
+        summary.assistant_message_count++
+        continue
+      }
+
+      if (payloadType === 'message') {
         const role = String(payload.role ?? '')
         const text = extractText(payload.content ?? payload.message)
         if (role === 'user') {
