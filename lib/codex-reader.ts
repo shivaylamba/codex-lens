@@ -32,10 +32,14 @@ import { categorizeTool, isMcpTool, parseMcpTool } from '@/lib/tool-categories'
 const execFileAsync = promisify(execFile)
 
 const CODEX_DIR = process.env.CODEX_CONFIG_DIR ?? path.join(os.homedir(), '.codex')
+const LENS_CACHE_DIR = process.env.CODEX_LENS_CACHE_DIR ?? path.join(os.homedir(), '.codex-lens')
 const MAX_PREVIEW_BYTES = 80_000
 const MAX_INVENTORY_ITEMS = 5_000
 const MAX_FALLBACK_ROLLOUTS = Number(process.env.CODEX_LENS_MAX_FALLBACK_ROLLOUTS ?? 500)
 const MAX_REPLAY_EVENTS = Number(process.env.CODEX_LENS_MAX_REPLAY_EVENTS ?? 25_000)
+const ROLLOUT_SUMMARY_CACHE_VERSION = 1
+const ROLLOUT_SUMMARY_CONCURRENCY = Number(process.env.CODEX_LENS_SUMMARY_CONCURRENCY ?? 2)
+const SESSION_CACHE_TTL_MS = Number(process.env.CODEX_LENS_SESSION_CACHE_TTL_MS ?? 30_000)
 
 type AnyRecord = Record<string, unknown>
 
@@ -77,6 +81,40 @@ interface SessionReadOptions {
   offset?: number
   includeRolloutFallback?: boolean
 }
+
+interface RolloutLightSummary {
+  session_id: string
+  start_time: string
+  last_time: string
+  user_message_count: number
+  assistant_message_count: number
+  tool_counts: Record<string, number>
+  input_tokens: number
+  output_tokens: number
+  cache_creation_input_tokens: number
+  cache_read_input_tokens: number
+  reasoning_output_tokens: number
+  first_prompt: string
+  user_interruptions: number
+  tool_errors: number
+  tool_error_categories: Record<string, number>
+  uses_task_agent: boolean
+  uses_mcp: boolean
+  uses_web_search: boolean
+  uses_web_fetch: boolean
+  message_hours: number[]
+  user_message_timestamps: string[]
+  raw_event_count: number
+}
+
+interface CachedRolloutSummary {
+  size: number
+  mtimeMs: number
+  summary: RolloutLightSummary
+}
+
+let sessionMemoryCache: { timestamp: number; value: SessionMeta[] } | null = null
+let sessionMemoryPromise: Promise<SessionMeta[]> | null = null
 
 export function codexPath(...segments: string[]): string {
   return path.join(CODEX_DIR, ...segments)
@@ -410,6 +448,246 @@ function sessionIndexRowToMeta(row: AnyRecord): SessionMeta | null {
   }
 }
 
+function emptyRolloutSummary(sessionId: string): RolloutLightSummary {
+  return {
+    session_id: sessionId,
+    start_time: '',
+    last_time: '',
+    user_message_count: 0,
+    assistant_message_count: 0,
+    tool_counts: {},
+    input_tokens: 0,
+    output_tokens: 0,
+    cache_creation_input_tokens: 0,
+    cache_read_input_tokens: 0,
+    reasoning_output_tokens: 0,
+    first_prompt: '',
+    user_interruptions: 0,
+    tool_errors: 0,
+    tool_error_categories: {},
+    uses_task_agent: false,
+    uses_mcp: false,
+    uses_web_search: false,
+    uses_web_fetch: false,
+    message_hours: [],
+    user_message_timestamps: [],
+    raw_event_count: 0,
+  }
+}
+
+async function summarizeRolloutLight(filePath: string, thread?: ThreadRow): Promise<RolloutLightSummary> {
+  const summary = emptyRolloutSummary(thread?.id ?? sessionIdFromPath(filePath))
+  try {
+    const rl = readline.createInterface({
+      input: createReadStream(filePath, { encoding: 'utf-8' }),
+      crlfDelay: Infinity,
+    })
+
+    for await (const rawLine of rl) {
+      if (!rawLine.trim()) continue
+      const line = safeJsonParse<AnyRecord>(rawLine)
+      if (!line) continue
+      summary.raw_event_count++
+
+      const ts = lineTimestamp(line)
+      if (ts) {
+        if (!summary.start_time) summary.start_time = ts
+        summary.last_time = ts
+      }
+
+      const payload = eventPayload(line)
+      const payloadType = String(payload.type ?? '')
+
+      if (line.type === 'session_meta') {
+        if (!thread && typeof payload.id === 'string') summary.session_id = payload.id
+        continue
+      }
+
+      if (payloadType === 'token_count') {
+        const usage = usageFromTokenInfo(asRecord(payload.info))
+        summary.input_tokens = Math.max(summary.input_tokens, usage.input)
+        summary.output_tokens = Math.max(summary.output_tokens, usage.output)
+        summary.cache_read_input_tokens = Math.max(summary.cache_read_input_tokens, usage.cached)
+        summary.reasoning_output_tokens = Math.max(summary.reasoning_output_tokens, usage.reasoning)
+        continue
+      }
+
+      if (payloadType === 'turn_aborted') {
+        summary.user_interruptions++
+        continue
+      }
+
+      if (payloadType === 'user_message') {
+        const text = extractText(payload.message ?? payload.content ?? payload.text_elements)
+        summary.user_message_count++
+        if (!summary.first_prompt && text) summary.first_prompt = truncate(text)
+        if (ts) {
+          const d = new Date(ts)
+          if (!Number.isNaN(d.getTime())) {
+            summary.message_hours.push(d.getHours())
+            summary.user_message_timestamps.push(ts)
+          }
+        }
+        continue
+      }
+
+      if (payloadType === 'agent_message' || payloadType === 'message') {
+        const role = String(payload.role ?? '')
+        const text = extractText(payload.content ?? payload.message)
+        if (role === 'user') {
+          summary.user_message_count++
+          if (!summary.first_prompt && text) summary.first_prompt = truncate(text)
+          if (ts) {
+            const d = new Date(ts)
+            if (!Number.isNaN(d.getTime())) {
+              summary.message_hours.push(d.getHours())
+              summary.user_message_timestamps.push(ts)
+            }
+          }
+        } else if (role === 'assistant') {
+          summary.assistant_message_count++
+        }
+        continue
+      }
+
+      if (
+        payloadType === 'function_call' ||
+        payloadType === 'custom_tool_call' ||
+        payloadType === 'image_generation_call' ||
+        payloadType === 'web_search_call' ||
+        payloadType === 'tool_search_call'
+      ) {
+        const call = buildToolCall(payload)
+        if (!call) continue
+        summary.tool_counts[call.name] = (summary.tool_counts[call.name] ?? 0) + 1
+        if (call.name === 'spawn_agent' || call.name === 'wait_agent' || call.name === 'close_agent' || payloadType === 'custom_tool_call') {
+          summary.uses_task_agent = true
+        }
+        if (isMcpTool(call.name) || call.name.startsWith('mcp__') || payloadType === 'custom_tool_call') {
+          summary.uses_mcp = true
+        }
+        if (call.name.includes('web_search') || payloadType === 'web_search_call') {
+          summary.uses_web_search = true
+        }
+        continue
+      }
+
+      if (
+        payloadType === 'function_call_output' ||
+        payloadType === 'custom_tool_call_output' ||
+        payloadType === 'exec_command_end' ||
+        payloadType === 'patch_apply_end' ||
+        payloadType === 'web_search_end' ||
+        payloadType === 'image_generation_end' ||
+        payloadType === 'mcp_tool_call_end' ||
+        payloadType === 'tool_search_output'
+      ) {
+        const isError = payload.status === 'error' || num(payload.exit_code) !== 0 || payload.is_error === true
+        if (payloadType === 'mcp_tool_call_end') summary.uses_mcp = true
+        if (payloadType === 'web_search_end') summary.uses_web_search = true
+        if (isError) {
+          summary.tool_errors++
+          const category = payloadType === 'exec_command_end' ? 'shell' : categorizeTool(payloadType)
+          summary.tool_error_categories[category] = (summary.tool_error_categories[category] ?? 0) + 1
+        }
+      }
+    }
+  } catch {
+    return summary
+  }
+  return summary
+}
+
+async function readRolloutSummaryCache(): Promise<Record<string, CachedRolloutSummary>> {
+  const cache = await readJsonFile<{
+    version: number
+    files: Record<string, CachedRolloutSummary>
+  }>(path.join(LENS_CACHE_DIR, 'rollout-summary-cache-v1.json'), { version: ROLLOUT_SUMMARY_CACHE_VERSION, files: {} })
+  return cache.version === ROLLOUT_SUMMARY_CACHE_VERSION ? cache.files : {}
+}
+
+async function writeRolloutSummaryCache(files: Record<string, CachedRolloutSummary>): Promise<void> {
+  try {
+    await fs.mkdir(LENS_CACHE_DIR, { recursive: true })
+    await fs.writeFile(
+      path.join(LENS_CACHE_DIR, 'rollout-summary-cache-v1.json'),
+      JSON.stringify({ version: ROLLOUT_SUMMARY_CACHE_VERSION, files }),
+    )
+  } catch {
+    // Cache writes should never break dashboard reads.
+  }
+}
+
+async function getRolloutSummary(filePath: string, thread: ThreadRow | undefined, cache: Record<string, CachedRolloutSummary>): Promise<RolloutLightSummary | null> {
+  try {
+    const stat = await fs.stat(filePath)
+    const cached = cache[filePath]
+    if (cached && cached.size === stat.size && cached.mtimeMs === stat.mtimeMs) {
+      return cached.summary
+    }
+    const summary = await summarizeRolloutLight(filePath, thread)
+    cache[filePath] = { size: stat.size, mtimeMs: stat.mtimeMs, summary }
+    return summary
+  } catch {
+    return null
+  }
+}
+
+function applyRolloutSummary(session: SessionMeta, summary: RolloutLightSummary): SessionMeta {
+  const startTime = session.start_time || summary.start_time
+  const endTime = summary.last_time || startTime
+  const start = new Date(startTime).getTime()
+  const end = new Date(endTime).getTime()
+  const duration = summary.start_time && Number.isFinite(start) && Number.isFinite(end)
+    ? Math.max(0, (end - start) / 60_000)
+    : session.duration_minutes
+
+  return {
+    ...session,
+    start_time: startTime,
+    duration_minutes: duration,
+    user_message_count: summary.user_message_count || session.user_message_count,
+    assistant_message_count: summary.assistant_message_count || session.assistant_message_count,
+    tool_counts: Object.keys(summary.tool_counts).length ? summary.tool_counts : session.tool_counts,
+    input_tokens: summary.input_tokens || session.input_tokens,
+    output_tokens: summary.output_tokens || session.output_tokens,
+    cache_creation_input_tokens: summary.cache_creation_input_tokens || session.cache_creation_input_tokens,
+    cache_read_input_tokens: summary.cache_read_input_tokens || session.cache_read_input_tokens,
+    reasoning_output_tokens: summary.reasoning_output_tokens || session.reasoning_output_tokens,
+    first_prompt: summary.first_prompt || session.first_prompt,
+    user_interruptions: summary.user_interruptions || session.user_interruptions,
+    tool_errors: summary.tool_errors || session.tool_errors,
+    tool_error_categories: Object.keys(summary.tool_error_categories).length ? summary.tool_error_categories : session.tool_error_categories,
+    uses_task_agent: summary.uses_task_agent || session.uses_task_agent,
+    uses_mcp: summary.uses_mcp || session.uses_mcp,
+    uses_web_search: summary.uses_web_search || session.uses_web_search,
+    uses_web_fetch: summary.uses_web_fetch || session.uses_web_fetch,
+    message_hours: summary.message_hours.length ? summary.message_hours : session.message_hours,
+    user_message_timestamps: summary.user_message_timestamps.length ? summary.user_message_timestamps : session.user_message_timestamps,
+  }
+}
+
+async function enrichSessionsWithRolloutSummaries(sessions: SessionMeta[], threads: ThreadRow[]): Promise<SessionMeta[]> {
+  const withRollouts = sessions.filter(s => s.rollout_path)
+  if (!withRollouts.length) return sessions
+
+  const cache = await readRolloutSummaryCache()
+  const threadById = new Map(threads.map(t => [t.id, t]))
+  const enrichedById = new Map<string, SessionMeta>()
+  let next = 0
+  const workers = Array.from({ length: Math.max(1, ROLLOUT_SUMMARY_CONCURRENCY) }, async () => {
+    while (next < withRollouts.length) {
+      const session = withRollouts[next++]
+      if (!session.rollout_path) continue
+      const summary = await getRolloutSummary(session.rollout_path, threadById.get(session.session_id), cache)
+      if (summary) enrichedById.set(session.session_id, applyRolloutSummary(session, summary))
+    }
+  })
+  await Promise.all(workers)
+  await writeRolloutSummaryCache(cache)
+  return sessions.map(session => enrichedById.get(session.session_id) ?? session)
+}
+
 function eventPayload(line: AnyRecord): AnyRecord {
   return asRecord(line.payload)
 }
@@ -738,7 +1016,7 @@ async function parseRollout(filePath: string, thread?: ThreadRow): Promise<Rollo
   }
 }
 
-export async function getSessions(options: SessionReadOptions = {}): Promise<SessionMeta[]> {
+async function loadSessions(options: SessionReadOptions = {}): Promise<SessionMeta[]> {
   const { limit, offset = 0, includeRolloutFallback = true } = options
   const [threads, indexSessions] = await Promise.all([readThreads(), readSessionIndex()])
 
@@ -749,7 +1027,8 @@ export async function getSessions(options: SessionReadOptions = {}): Promise<Ses
   }
 
   if (byId.size) {
-    const sorted = [...byId.values()].sort((a, b) => b.start_time.localeCompare(a.start_time))
+    const enriched = await enrichSessionsWithRolloutSummaries([...byId.values()], threads)
+    const sorted = enriched.sort((a, b) => b.start_time.localeCompare(a.start_time))
     return typeof limit === 'number' ? sorted.slice(offset, offset + limit) : sorted
   }
 
@@ -769,6 +1048,30 @@ export async function getSessions(options: SessionReadOptions = {}): Promise<Ses
   }
 
   return fromRollouts.sort((a, b) => b.start_time.localeCompare(a.start_time))
+}
+
+export async function getSessions(options: SessionReadOptions = {}): Promise<SessionMeta[]> {
+  const { limit, offset = 0 } = options
+  const canUseFullCache = typeof limit !== 'number' && offset === 0
+
+  if (canUseFullCache) {
+    const now = Date.now()
+    if (sessionMemoryCache && now - sessionMemoryCache.timestamp < SESSION_CACHE_TTL_MS) {
+      return sessionMemoryCache.value
+    }
+    if (sessionMemoryPromise) return sessionMemoryPromise
+    sessionMemoryPromise = loadSessions(options)
+      .then(value => {
+        sessionMemoryCache = { timestamp: Date.now(), value }
+        return value
+      })
+      .finally(() => {
+        sessionMemoryPromise = null
+      })
+    return sessionMemoryPromise
+  }
+
+  return loadSessions(options)
 }
 
 function threadToSessionMeta(t: ThreadRow): SessionMeta | null {

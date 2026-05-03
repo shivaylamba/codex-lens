@@ -46,12 +46,16 @@ CODEX_CONFIG_DIR=~/.codex-work npx codex-lens-dashboard
 CODEX_LENS_CACHE_DIR=/tmp/codex-lens-runtime npx codex-lens-dashboard
 CODEX_LENS_MAX_FALLBACK_ROLLOUTS=500 npx codex-lens-dashboard
 CODEX_LENS_MAX_REPLAY_EVENTS=25000 npx codex-lens-dashboard
+CODEX_LENS_SUMMARY_CONCURRENCY=2 npx codex-lens-dashboard
+CODEX_LENS_SESSION_CACHE_TTL_MS=30000 npx codex-lens-dashboard
 ```
 
 - `CODEX_CONFIG_DIR`: folder to analyze. Defaults to `~/.codex`.
 - `CODEX_LENS_CACHE_DIR`: runtime app cache folder. Defaults to `~/.codex-lens`.
 - `CODEX_LENS_MAX_FALLBACK_ROLLOUTS`: maximum rollout JSONL files to parse when no SQLite/index summary exists. Defaults to `500`.
 - `CODEX_LENS_MAX_REPLAY_EVENTS`: maximum JSONL events loaded for one replay view. Defaults to `25000`.
+- `CODEX_LENS_SUMMARY_CONCURRENCY`: number of rollout files summarized in parallel. Defaults to `2`.
+- `CODEX_LENS_SESSION_CACHE_TTL_MS`: in-process summary cache lifetime. Defaults to `30000`.
 
 ## Dashboard Sections
 
@@ -294,6 +298,7 @@ Codex Lens is designed to load summary pages without reading every rollout JSONL
 - `/api/sessions` is paginated server-side.
 - The overview page requests only the latest sessions needed for its recent-session table.
 - Rollout JSONL parsing is streaming and bounded.
+- A lightweight rollout-summary cache stores only counts, tokens, tool totals, timestamps, and flags, so message/tool counts stay accurate without storing full conversations in memory.
 - Full replay parsing happens only when opening a specific session.
 - Storage size uses the platform `du` command when available, with a portable filesystem walk as fallback.
 
