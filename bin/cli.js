@@ -52,8 +52,8 @@ Codex Lens
 Version: ${pkg.version}
 
 Usage:
-  codex-lens
-  npx codex-lens
+  codex-lens-dashboard
+  npx codex-lens-dashboard
 
 Options:
   --help       Show this help message

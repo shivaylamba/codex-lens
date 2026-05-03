@@ -3,13 +3,13 @@
 Local analytics and inventory for Codex. No cloud backend, no telemetry, no API key: the dashboard reads your local `~/.codex/` data.
 
 ```bash
-npx codex-lens
+npx codex-lens-dashboard
 ```
 
 By default Codex Lens reads `~/.codex/`. To point at another profile:
 
 ```bash
-CODEX_CONFIG_DIR=~/.codex-work npx codex-lens
+CODEX_CONFIG_DIR=~/.codex-work npx codex-lens-dashboard
 ```
 
 ## What It Shows

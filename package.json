@@ -1,5 +1,5 @@
 {
-  "name": "codex-lens",
+  "name": "codex-lens-dashboard",
   "version": "0.1.0",
   "description": "Codex Lens - local analytics and inventory for ~/.codex/",
   "author": "Shivay Lamba",
@@ -21,7 +21,7 @@
     "node": ">=18"
   },
   "bin": {
-    "codex-lens": "bin/cli.js"
+    "codex-lens-dashboard": "bin/cli.js"
   },
   "files": [
     "bin",
