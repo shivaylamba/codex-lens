@@ -6,6 +6,7 @@ import { TopBar } from '@/components/layout/top-bar'
 import { SessionSidebar } from '@/components/sessions/replay/session-sidebar'
 import { UserTurnCard, AssistantTurnCard } from '@/components/sessions/replay/turn-cards'
 import { TokenAccumulationChart } from '@/components/sessions/replay/token-accumulation-chart'
+import { ContextUsagePanel } from '@/components/sessions/replay/context-usage-panel'
 import { SessionBadges } from '@/components/sessions/session-badges'
 import { formatCost, formatTokens, formatDuration, projectDisplayName } from '@/lib/decode'
 import type { ReplayData, SessionWithFacet } from '@/types/claude'
@@ -194,6 +195,10 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
             />
           </div>
         )}
+
+        <div className="mt-4">
+          <ContextUsagePanel usage={replay.context_usage} />
+        </div>
       </div>
 
       {/* Two-column layout */}

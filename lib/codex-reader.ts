@@ -20,6 +20,7 @@ import type {
   ReplayData,
   ReplayTurn,
   SessionMeta,
+  ContextUsageSnapshot,
   StatsCache,
   ToolCall,
   ToolsAnalytics,
@@ -737,6 +738,38 @@ function usageFromTokenInfo(info: AnyRecord): {
   }
 }
 
+function contextUsageFromPayload(payload: AnyRecord, timestamp: string): ContextUsageSnapshot | null {
+  const info = asRecord(payload.info)
+  const total = asRecord(info.total_token_usage)
+  const last = asRecord(info.last_token_usage)
+  const input = num(last.input_tokens) || num(total.input_tokens)
+  const cached = num(last.cached_input_tokens) || num(total.cached_input_tokens)
+  const output = num(last.output_tokens) || num(total.output_tokens)
+  const reasoning = num(last.reasoning_output_tokens) || num(total.reasoning_output_tokens)
+  const window = num(info.model_context_window)
+  if (!input && !output && !cached && !window) return null
+  const rateLimits = asRecord(payload.rate_limits)
+  const primary = asRecord(rateLimits.primary)
+  const secondary = asRecord(rateLimits.secondary)
+  return {
+    timestamp,
+    input_tokens: input,
+    fresh_input_tokens: Math.max(0, input - cached),
+    cached_input_tokens: cached,
+    output_tokens: output,
+    reasoning_output_tokens: reasoning,
+    total_tokens: num(last.total_tokens) || input + output,
+    session_total_tokens: num(total.total_tokens) || input + output,
+    model_context_window: window,
+    context_percent: window ? Math.min(1, input / window) : 0,
+    rate_limits: {
+      plan_type: typeof rateLimits.plan_type === 'string' ? rateLimits.plan_type : undefined,
+      primary_used_percent: num(primary.used_percent),
+      secondary_used_percent: num(secondary.used_percent),
+    },
+  }
+}
+
 async function parseRollout(filePath: string, thread?: ThreadRow): Promise<RolloutParse> {
   const lines = await readRolloutLines(filePath)
   const fallbackId = sessionIdFromPath(filePath)
@@ -771,6 +804,7 @@ async function parseRollout(filePath: string, thread?: ThreadRow): Promise<Rollo
   const hasWebFetch = false
   let totalCost = 0
   let turnIndex = 0
+  let contextUsage: ContextUsageSnapshot | undefined
 
   for (const line of lines) {
     const ts = lineTimestamp(line)
@@ -800,6 +834,8 @@ async function parseRollout(filePath: string, thread?: ThreadRow): Promise<Rollo
 
     if (payloadType === 'token_count') {
       const usage = usageFromTokenInfo(asRecord(payload.info))
+      const contextSnapshot = contextUsageFromPayload(payload, ts)
+      if (contextSnapshot) contextUsage = contextSnapshot
       if (usage.total || usage.input || usage.output || usage.cached) {
         inputTokens = Math.max(inputTokens, usage.input)
         outputTokens = Math.max(outputTokens, usage.output)
@@ -1015,6 +1051,7 @@ async function parseRollout(filePath: string, thread?: ThreadRow): Promise<Rollo
       turns: turns.map(t => t.usage ? t : t.type === 'assistant' && t.text ? { ...t, usage } : t),
       compactions,
       summaries,
+      context_usage: contextUsage,
       total_cost: totalCost,
       raw_event_count: lines.length,
     },

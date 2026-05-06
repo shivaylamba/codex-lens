@@ -177,8 +177,27 @@ export interface ReplayData {
   turns: ReplayTurn[]
   compactions: CompactionEvent[]
   summaries: SummaryEvent[]
+  context_usage?: ContextUsageSnapshot
   total_cost: number
   raw_event_count?: number
+}
+
+export interface ContextUsageSnapshot {
+  timestamp: string
+  input_tokens: number
+  fresh_input_tokens: number
+  cached_input_tokens: number
+  output_tokens: number
+  reasoning_output_tokens: number
+  total_tokens: number
+  session_total_tokens: number
+  model_context_window: number
+  context_percent: number
+  rate_limits?: {
+    plan_type?: string
+    primary_used_percent?: number
+    secondary_used_percent?: number
+  }
 }
 
 export interface ProjectSummary {
